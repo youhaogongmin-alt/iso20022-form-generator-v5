@@ -21,7 +21,7 @@ from form_rules import (
 
 # Which component types are currently enabled for lazy rendering.
 # Start with Account only (Phase 2), expand later.
-LAZY_COMPONENTS_ENABLED = {'Account'}
+LAZY_COMPONENTS_ENABLED = {'Account', 'FinInstnId', 'PartyIdentification'}
 
 
 def detect_component_type(field: dict) -> str | None:
