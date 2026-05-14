@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>camt.029.001.09 - ISO 20022 Message Form</title>
+  <link rel="stylesheet" href="css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/bootstrap-theme.min.css">
+  <link rel="stylesheet" href="css/app.css">
+  <!--[if lt IE 9]>
+  <script src="js/vendor/html5shiv.min.js"></script>
+  <script src="js/vendor/respond.min.js"></script>
+  <script src="js/vendor/es5-shim.min.js"></script>
+  <script src="js/vendor/es5-sham.min.js"></script>
+  <script src="js/vendor/json2.min.js"></script>
+  <![endif]-->
+</head>
+<body class="theme-light">
+
+  <div id="page-wrapper">
+  <!-- Page Header Bar -->
+  <div class="page-header-bar">
+    <h1> / </h1>
+    <p class="subtitle">ISO 20022 CBPRPlus SR2026 (Combined)</p>
+    <span class="msg-id">camt.029.001.09</span>
+    <span class="audit-badge">审核只读模式</span>
+  </div>
+
+    <div class="main-panel">
+      <!-- Command Bar -->
+      <div class="command-bar">
+        <button type="button" class="btn btn-default btn-sm" id="btnRequiredOnly">👁️ 仅显示必填</button>
+        <button type="button" class="btn btn-default btn-sm" id="btnExportJson">📋 复制JSON</button>
+        <button type="button" class="btn btn-default btn-sm" id="btnExportXml">📄 导出XML</button>
+        <button type="button" class="btn btn-primary btn-sm" id="btnValidate">✅ 校验全部</button>
+        <button type="button" class="btn btn-default btn-sm" id="btnClearDraft">🗑️ 清除草稿</button>
+        <button type="button" class="btn btn-default btn-sm" id="btnAuditMode">🔒 审核模式</button>
+        <button type="button" class="btn btn-default btn-sm" id="btnLangZh">中</button>
+        <button type="button" class="btn btn-default btn-sm" id="btnLangEn">EN</button>
+        <button type="button" class="btn btn-default btn-sm" id="btnLangFr">FR</button>
+        <button type="button" class="btn btn-default btn-sm" id="btnTheme">🌓 主题</button>
+        <span class="autosave-indicator">
+          <span class="autosave-dot" id="autosaveDot"></span>
+          <span id="autosaveText">自动暂存已开启</span>
+        </span>
+      </div>
+
+
+      <!-- Progress Bar -->
+      <div class="progress-container">
+        <span class="progress-label">📊 必填字段完成度 / Required Fields</span>
+        <div class="progress">
+          <div class="progress-bar" id="progressFill" role="progressbar" style="width:0%"></div>
+        </div>
+        <span class="progress-text" id="progressText">0 / 0</span>
+      </div>
+
+      <!-- Template Bar -->
+      <div class="template-bar">
+        <span class="label-text">📋 快速模板 / Templates:</span>
+        <span id="runtimeTemplateList"></span>
+      </div>
+
+      <!-- Search Bar -->
+      <div class="search-bar">
+        <div class="input-group">
+          <span class="input-group-addon">🔍</span>
+          <input type="text" class="form-control" id="fieldSearch" placeholder="输入字段名定位 (中文/英文/XML标签)...">
+          <span class="input-group-btn">
+            <button class="btn btn-default" type="button" id="searchPrev" disabled="disabled">&#8593;</button>
+            <button class="btn btn-default" type="button" id="searchNext" disabled="disabled">&#8595;</button>
+            <button class="btn btn-default" type="button" id="searchClear">&#215;</button>
+          </span>
+        </div>
+        <span class="search-count" id="searchCount"></span>
+      </div>
+
+
+      <!-- Section: AppHdr -->
+      <div class="section-divider"><span>业务应用头 / Business Application Header</span></div>
+<div class="panel panel-default">
+  <div class="panel-heading" data-toggle="collapse" data-target="#collapse_AH_AppHdr">
+    <h4 class="panel-title">
+      业务应用头V02 (head.001.001.02) / Business Application Header V02 (head.001.001.02) <span class="label label-danger">必填 / Required</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_AH_AppHdr" class="panel-body collapse in">
+    <div class="field-grid">
+<div class="field-group field-editable" data-iso-path="AppHdr.AppHdr.CharSet" data-form-name="AH_AppHdr_CharSet" data-required="false">
+  <label class="control-label" for="AH_AppHdr_CharSet">
+    字符集 <span class="en">Character Set (CharSet)</span>
+    
+    <span class="mult-tag">[0..1]</span>
+  </label>
+  <input type="text" class="form-control" id="AH_AppHdr_CharSet" name="AH_AppHdr_CharSet" data-prefix="AH" data-tag="CharSet" data-iso-path="AppHdr.AppHdr.CharSet" data-form-name="AH_AppHdr_CharSet" data-type-code="text">
+  
+  <div class="error-msg"></div>
+</div>
+</div>
+<div class="panel panel-default">
+  <div class="panel-heading" data-toggle="collapse" data-target="#collapse_AH_AppHdr_Fr">
+    <h4 class="panel-title">
+      发送方 / From <span class="label label-danger">必填 / Required</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_AH_AppHdr_Fr" class="panel-body collapse in">
+    <div class="panel panel-default">
+  <div class="panel-heading" data-toggle="collapse" data-target="#collapse_AH_AppHdr_Fr_FIId">
+    <h4 class="panel-title">
+      金融机构标识 / Financial Institution Identification <span class="label label-danger">必填 / Required</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_AH_AppHdr_Fr_FIId" class="panel-body collapse in">
+    <div class="panel panel-default">
+  <div class="panel-heading" data-toggle="collapse" data-target="#collapse_AH_AppHdr_Fr_FIId_FinInstnId">
+    <h4 class="panel-title">
+      金融机构标识 / Financial Institution Identification <span class="label label-danger">必填 / Required</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_AH_AppHdr_Fr_FIId_FinInstnId" class="panel-body collapse in">
+    <div class="field-grid">
+<div class="field-group field-required" data-iso-path="AppHdr.AppHdr.Fr.FIId.FinInstnId.BICFI" data-form-name="AH_AppHdr_Fr_FIId_FinInstnId_BICFI" data-required="true">
+  <label class="control-label" for="AH_AppHdr_Fr_FIId_FinInstnId_BICFI">
+    金融机构BIC <span class="en">BICFI (BICFI)</span>
+    <span class="required text-danger">*</span>
+    <span class="mult-tag">[1..1]</span>
+  </label>
+  <input type="text" class="form-control" id="AH_AppHdr_Fr_FIId_FinInstnId_BICFI" name="AH_AppHdr_Fr_FIId_FinInstnId_BICFI" data-prefix="AH" data-tag="BICFI" data-iso-path="AppHdr.AppHdr.Fr.FIId.FinInstnId.BICFI" data-form-name="AH_AppHdr_Fr_FIId_FinInstnId_BICFI" data-type-code="text">
+  
+  <div class="error-msg"></div>
+</div>
+</div>
+<div class="panel panel-default">
+  <div class="panel-heading collapsed" data-toggle="collapse" data-target="#collapse_AH_AppHdr_Fr_FIId_FinInstnId_ClrSysMmbId">
+    <h4 class="panel-title">
+      清算系统成员标识 / Clearing System Member Identification <span class="label label-info">可选 / Optional</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_AH_AppHdr_Fr_FIId_FinInstnId_ClrSysMmbId" class="panel-body collapse ">
+    <div class="panel panel-default">
+  <div class="panel-heading" data-toggle="collapse" data-target="#collapse_AH_AppHdr_Fr_FIId_FinInstnId_ClrSysMmbId_ClrSysId">
+    <h4 class="panel-title">
+      清算系统标识 / Clearing System Identification <span class="label label-danger">必填 / Required</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_AH_AppHdr_Fr_FIId_FinInstnId_ClrSysMmbId_ClrSysId" class="panel-body collapse in">
+    <div class="field-grid">
+<div class="field-group field-required" data-iso-path="AppHdr.AppHdr.Fr.FIId.FinInstnId.ClrSysMmbId.ClrSysId.Cd" data-form-name="AH_AppHdr_Fr_FIId_FinInstnId_ClrSysMmbId_ClrSysId_Cd" data-required="true">
+  <label class="control-label" for="AH_AppHdr_Fr_FIId_FinInstnId_ClrSysMmbId_ClrSysId_Cd">
+    代码 <span class="en">Code (Cd)</span>
+    <span class="required text-danger">*</span>
+    <span class="mult-tag">[1..1]</span>
+  </label>
+  <input type="text" class="form-control" id="AH_AppHdr_Fr_FIId_FinInstnId_ClrSysMmbId_ClrSysId_Cd" name="AH_AppHdr_Fr_FIId_FinInstnId_ClrSysMmbId_ClrSysId_Cd" data-prefix="AH" data-tag="Cd" data-iso-path="AppHdr.AppHdr.Fr.FIId.FinInstnId.ClrSysMmbId.ClrSysId.Cd" data-form-name="AH_AppHdr_Fr_FIId_FinInstnId_ClrSysMmbId_ClrSysId_Cd" data-type-code="text" maxlength="5">
+  <div class="hint">最大长度 / Max: 5</div>
+  <div class="error-msg"></div>
+</div>
+</div>
+  </div>
+</div>
+<div class="field-grid">
+<div class="field-group field-required" data-iso-path="AppHdr.AppHdr.Fr.FIId.FinInstnId.ClrSysMmbId.MmbId" data-form-name="AH_AppHdr_Fr_FIId_FinInstnId_ClrSysMmbId_MmbId" data-required="true">
+  <label class="control-label" for="AH_AppHdr_Fr_FIId_FinInstnId_ClrSysMmbId_MmbId">
+    成员标识 <span class="en">Member Identification (MmbId)</span>
+    <span class="required text-danger">*</span>
+    <span class="mult-tag">[1..1]</span>
+  </label>
+  <input type="text" class="form-control" id="AH_AppHdr_Fr_FIId_FinInstnId_ClrSysMmbId_MmbId" name="AH_AppHdr_Fr_FIId_FinInstnId_ClrSysMmbId_MmbId" data-prefix="AH" data-tag="MmbId" data-iso-path="AppHdr.AppHdr.Fr.FIId.FinInstnId.ClrSysMmbId.MmbId" data-form-name="AH_AppHdr_Fr_FIId_FinInstnId_ClrSysMmbId_MmbId" data-type-code="text" maxlength="35">
+  <div class="hint">最大长度 / Max: 35</div>
+  <div class="error-msg"></div>
+</div>
+</div>
+  </div>
+</div>
+<div class="field-grid">
+<div class="field-group field-editable" data-iso-path="AppHdr.AppHdr.Fr.FIId.FinInstnId.LEI" data-form-name="AH_AppHdr_Fr_FIId_FinInstnId_LEI" data-required="false">
+  <label class="control-label" for="AH_AppHdr_Fr_FIId_FinInstnId_LEI">
+    法人实体标识 <span class="en">LEI (LEI)</span>
+    
+    <span class="mult-tag">[0..1]</span>
+  </label>
+  <input type="text" class="form-control" id="AH_AppHdr_Fr_FIId_FinInstnId_LEI" name="AH_AppHdr_Fr_FIId_FinInstnId_LEI" data-prefix="AH" data-tag="LEI" data-iso-path="AppHdr.AppHdr.Fr.FIId.FinInstnId.LEI" data-form-name="AH_AppHdr_Fr_FIId_FinInstnId_LEI" data-type-code="text">
+  
+  <div class="error-msg"></div>
+</div>
+</div>
+  </div>
+</div>
+  </div>
+</div>
+  </div>
+</div>
+<div class="panel panel-default">
+  <div class="panel-heading" data-toggle="collapse" data-target="#collapse_AH_AppHdr_To">
+    <h4 class="panel-title">
+      接收方 / To <span class="label label-danger">必填 / Required</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_AH_AppHdr_To" class="panel-body collapse in">
+    <div class="panel panel-default">
+  <div class="panel-heading" data-toggle="collapse" data-target="#collapse_AH_AppHdr_To_FIId">
+    <h4 class="panel-title">
+      金融机构标识 / Financial Institution Identification <span class="label label-danger">必填 / Required</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_AH_AppHdr_To_FIId" class="panel-body collapse in">
+    <div class="panel panel-default">
+  <div class="panel-heading" data-toggle="collapse" data-target="#collapse_AH_AppHdr_To_FIId_FinInstnId">
+    <h4 class="panel-title">
+      金融机构标识 / Financial Institution Identification <span class="label label-danger">必填 / Required</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_AH_AppHdr_To_FIId_FinInstnId" class="panel-body collapse in">
+    <div class="field-grid">
+<div class="field-group field-required" data-iso-path="AppHdr.AppHdr.To.FIId.FinInstnId.BICFI" data-form-name="AH_AppHdr_To_FIId_FinInstnId_BICFI" data-required="true">
+  <label class="control-label" for="AH_AppHdr_To_FIId_FinInstnId_BICFI">
+    金融机构BIC <span class="en">BICFI (BICFI)</span>
+    <span class="required text-danger">*</span>
+    <span class="mult-tag">[1..1]</span>
+  </label>
+  <input type="text" class="form-control" id="AH_AppHdr_To_FIId_FinInstnId_BICFI" name="AH_AppHdr_To_FIId_FinInstnId_BICFI" data-prefix="AH" data-tag="BICFI" data-iso-path="AppHdr.AppHdr.To.FIId.FinInstnId.BICFI" data-form-name="AH_AppHdr_To_FIId_FinInstnId_BICFI" data-type-code="text">
+  
+  <div class="error-msg"></div>
+</div>
+</div>
+<div class="panel panel-default">
+  <div class="panel-heading collapsed" data-toggle="collapse" data-target="#collapse_AH_AppHdr_To_FIId_FinInstnId_ClrSysMmbId">
+    <h4 class="panel-title">
+      清算系统成员标识 / Clearing System Member Identification <span class="label label-info">可选 / Optional</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_AH_AppHdr_To_FIId_FinInstnId_ClrSysMmbId" class="panel-body collapse ">
+    <div class="panel panel-default">
+  <div class="panel-heading" data-toggle="collapse" data-target="#collapse_AH_AppHdr_To_FIId_FinInstnId_ClrSysMmbId_ClrSysId">
+    <h4 class="panel-title">
+      清算系统标识 / Clearing System Identification <span class="label label-danger">必填 / Required</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_AH_AppHdr_To_FIId_FinInstnId_ClrSysMmbId_ClrSysId" class="panel-body collapse in">
+    <div class="field-grid">
+<div class="field-group field-required" data-iso-path="AppHdr.AppHdr.To.FIId.FinInstnId.ClrSysMmbId.ClrSysId.Cd" data-form-name="AH_AppHdr_To_FIId_FinInstnId_ClrSysMmbId_ClrSysId_Cd" data-required="true">
+  <label class="control-label" for="AH_AppHdr_To_FIId_FinInstnId_ClrSysMmbId_ClrSysId_Cd">
+    代码 <span class="en">Code (Cd)</span>
+    <span class="required text-danger">*</span>
+    <span class="mult-tag">[1..1]</span>
+  </label>
+  <input type="text" class="form-control" id="AH_AppHdr_To_FIId_FinInstnId_ClrSysMmbId_ClrSysId_Cd" name="AH_AppHdr_To_FIId_FinInstnId_ClrSysMmbId_ClrSysId_Cd" data-prefix="AH" data-tag="Cd" data-iso-path="AppHdr.AppHdr.To.FIId.FinInstnId.ClrSysMmbId.ClrSysId.Cd" data-form-name="AH_AppHdr_To_FIId_FinInstnId_ClrSysMmbId_ClrSysId_Cd" data-type-code="text" maxlength="5">
+  <div class="hint">最大长度 / Max: 5</div>
+  <div class="error-msg"></div>
+</div>
+</div>
+  </div>
+</div>
+<div class="field-grid">
+<div class="field-group field-required" data-iso-path="AppHdr.AppHdr.To.FIId.FinInstnId.ClrSysMmbId.MmbId" data-form-name="AH_AppHdr_To_FIId_FinInstnId_ClrSysMmbId_MmbId" data-required="true">
+  <label class="control-label" for="AH_AppHdr_To_FIId_FinInstnId_ClrSysMmbId_MmbId">
+    成员标识 <span class="en">Member Identification (MmbId)</span>
+    <span class="required text-danger">*</span>
+    <span class="mult-tag">[1..1]</span>
+  </label>
+  <input type="text" class="form-control" id="AH_AppHdr_To_FIId_FinInstnId_ClrSysMmbId_MmbId" name="AH_AppHdr_To_FIId_FinInstnId_ClrSysMmbId_MmbId" data-prefix="AH" data-tag="MmbId" data-iso-path="AppHdr.AppHdr.To.FIId.FinInstnId.ClrSysMmbId.MmbId" data-form-name="AH_AppHdr_To_FIId_FinInstnId_ClrSysMmbId_MmbId" data-type-code="text" maxlength="35">
+  <div class="hint">最大长度 / Max: 35</div>
+  <div class="error-msg"></div>
+</div>
+</div>
+  </div>
+</div>
+<div class="field-grid">
+<div class="field-group field-editable" data-iso-path="AppHdr.AppHdr.To.FIId.FinInstnId.LEI" data-form-name="AH_AppHdr_To_FIId_FinInstnId_LEI" data-required="false">
+  <label class="control-label" for="AH_AppHdr_To_FIId_FinInstnId_LEI">
+    法人实体标识 <span class="en">LEI (LEI)</span>
+    
+    <span class="mult-tag">[0..1]</span>
+  </label>
+  <input type="text" class="form-control" id="AH_AppHdr_To_FIId_FinInstnId_LEI" name="AH_AppHdr_To_FIId_FinInstnId_LEI" data-prefix="AH" data-tag="LEI" data-iso-path="AppHdr.AppHdr.To.FIId.FinInstnId.LEI" data-form-name="AH_AppHdr_To_FIId_FinInstnId_LEI" data-type-code="text">
+  
+  <div class="error-msg"></div>
+</div>
+</div>
+  </div>
+</div>
+  </div>
+</div>
+  </div>
+</div>
+<div class="field-grid">
+<div class="field-group field-required" data-iso-path="AppHdr.AppHdr.BizMsgIdr" data-form-name="AH_AppHdr_BizMsgIdr" data-required="true">
+  <label class="control-label" for="AH_AppHdr_BizMsgIdr">
+    业务消息标识 <span class="en">Business Message Identifier (BizMsgIdr)</span>
+    <span class="required text-danger">*</span>
+    <span class="mult-tag">[1..1]</span>
+  </label>
+  <input type="text" class="form-control" id="AH_AppHdr_BizMsgIdr" name="AH_AppHdr_BizMsgIdr" data-prefix="AH" data-tag="BizMsgIdr" data-iso-path="AppHdr.AppHdr.BizMsgIdr" data-form-name="AH_AppHdr_BizMsgIdr" data-type-code="text" maxlength="35">
+  <div class="hint">最大长度 / Max: 35</div>
+  <div class="error-msg"></div>
+</div>
+<div class="field-group field-readonly" data-iso-path="AppHdr.AppHdr.MsgDefIdr" data-form-name="AH_AppHdr_MsgDefIdr" data-required="true">
+  <label class="control-label" for="AH_AppHdr_MsgDefIdr">
+    消息定义标识 <span class="en">Message Definition Identifier (MsgDefIdr)</span>
+    <span class="required text-danger">*</span>
+    <span class="mult-tag">[1..1]</span>
+  </label>
+  <input type="text" class="form-control" id="AH_AppHdr_MsgDefIdr" name="AH_AppHdr_MsgDefIdr" data-prefix="AH" data-tag="MsgDefIdr" data-iso-path="AppHdr.AppHdr.MsgDefIdr" data-form-name="AH_AppHdr_MsgDefIdr" data-type-code="text" maxlength="35" readonly="readonly" value="">
+  <div class="hint">最大长度 / Max: 35</div>
+  <div class="error-msg"></div>
+</div>
+</div>
+<div class="field-grid">
+<div class="field-group field-readonly" data-iso-path="AppHdr.AppHdr.BizSvc" data-form-name="AH_AppHdr_BizSvc" data-required="true">
+  <label class="control-label" for="AH_AppHdr_BizSvc">
+    业务服务 <span class="en">Business Service (BizSvc)</span>
+    <span class="required text-danger">*</span>
+    <span class="mult-tag">[1..1]</span>
+  </label>
+  <input type="text" class="form-control" id="AH_AppHdr_BizSvc" name="AH_AppHdr_BizSvc" data-prefix="AH" data-tag="BizSvc" data-iso-path="AppHdr.AppHdr.BizSvc" data-form-name="AH_AppHdr_BizSvc" data-type-code="text" maxlength="35" readonly="readonly" value="">
+  <div class="hint">最大长度 / Max: 35</div>
+  <div class="error-msg"></div>
+</div>
+</div>
+<div class="panel panel-default">
+  <div class="panel-heading collapsed" data-toggle="collapse" data-target="#collapse_AH_AppHdr_MktPrctc">
+    <h4 class="panel-title">
+      市场惯例 / Market Practice <span class="label label-info">可选 / Optional</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_AH_AppHdr_MktPrctc" class="panel-body collapse ">
+    <div class="field-grid">
+<div class="field-group field-required" data-iso-path="AppHdr.AppHdr.MktPrctc.Regy" data-form-name="AH_AppHdr_MktPrctc_Regy" data-required="true">
+  <label class="control-label" for="AH_AppHdr_MktPrctc_Regy">
+    注册机构 <span class="en">Registry (Regy)</span>
+    <span class="required text-danger">*</span>
+    <span class="mult-tag">[1..1]</span>
+  </label>
+  <input type="text" class="form-control" id="AH_AppHdr_MktPrctc_Regy" name="AH_AppHdr_MktPrctc_Regy" data-prefix="AH" data-tag="Regy" data-iso-path="AppHdr.AppHdr.MktPrctc.Regy" data-form-name="AH_AppHdr_MktPrctc_Regy" data-type-code="text" maxlength="350">
+  <div class="hint">最大长度 / Max: 350</div>
+  <div class="error-msg"></div>
+</div>
+<div class="field-group field-required" data-iso-path="AppHdr.AppHdr.MktPrctc.Id" data-form-name="AH_AppHdr_MktPrctc_Id" data-required="true">
+  <label class="control-label" for="AH_AppHdr_MktPrctc_Id">
+    标识 <span class="en">Identification (Id)</span>
+    <span class="required text-danger">*</span>
+    <span class="mult-tag">[1..1]</span>
+  </label>
+  <input type="text" class="form-control" id="AH_AppHdr_MktPrctc_Id" name="AH_AppHdr_MktPrctc_Id" data-prefix="AH" data-tag="Id" data-iso-path="AppHdr.AppHdr.MktPrctc.Id" data-form-name="AH_AppHdr_MktPrctc_Id" data-type-code="text" maxlength="2048">
+  <div class="hint">最大长度 / Max: 2048</div>
+  <div class="error-msg"></div>
+</div>
+</div>
+  </div>
+</div>
+<div class="field-grid">
+<div class="field-group field-required" data-iso-path="AppHdr.AppHdr.CreDt" data-form-name="AH_AppHdr_CreDt" data-required="true">
+  <label class="control-label" for="AH_AppHdr_CreDt">
+    创建日期 <span class="en">Creation Date (CreDt)</span>
+    <span class="required text-danger">*</span>
+    <span class="mult-tag">[1..1]</span>
+  </label>
+  <input type="text" class="form-control" id="AH_AppHdr_CreDt" name="AH_AppHdr_CreDt" data-prefix="AH" data-tag="CreDt" data-iso-path="AppHdr.AppHdr.CreDt" data-form-name="AH_AppHdr_CreDt" data-type-code="dateTime" placeholder="YYYY-MM-DDThh:mm:ss">
+  
+  <div class="error-msg"></div>
+</div>
+<div class="field-group field-editable" data-iso-path="AppHdr.AppHdr.CpyDplct" data-form-name="AH_AppHdr_CpyDplct" data-required="false">
+  <label class="control-label" for="AH_AppHdr_CpyDplct">
+    副本/重复 <span class="en">Copy Duplicate (CpyDplct)</span>
+    
+    <span class="mult-tag">[0..1]</span>
+  </label>
+  <select class="form-control" id="AH_AppHdr_CpyDplct" name="AH_AppHdr_CpyDplct" data-prefix="AH" data-tag="CpyDplct" data-iso-path="AppHdr.AppHdr.CpyDplct" data-form-name="AH_AppHdr_CpyDplct" data-type-code="text">
+    <option value="">-- 请选择 / Please select --</option>
+    <option value="CODU">CODU - 副本重复 / Copy Duplicate</option>
+    <option value="COPY">COPY - 副本 / Copy</option>
+    <option value="DUPL">DUPL - 重复 / Duplicate</option>
+</select>
+  
+  <div class="error-msg"></div>
+</div>
+</div>
+<div class="field-grid">
+<div class="field-group field-editable" data-iso-path="AppHdr.AppHdr.PssblDplct" data-form-name="AH_AppHdr_PssblDplct" data-required="false">
+  <label class="control-label" for="AH_AppHdr_PssblDplct">
+    可能重复 <span class="en">Possible Duplicate (PssblDplct)</span>
+    
+    <span class="mult-tag">[0..1]</span>
+  </label>
+  <select class="form-control" id="AH_AppHdr_PssblDplct" name="AH_AppHdr_PssblDplct" data-prefix="AH" data-tag="PssblDplct" data-iso-path="AppHdr.AppHdr.PssblDplct" data-form-name="AH_AppHdr_PssblDplct" data-type-code="boolean">
+  <option value="">-- 请选择 / Please select --</option>
+  <option value="true">是 / Yes (true)</option>
+  <option value="false">否 / No (false)</option>
+</select>
+  
+  <div class="error-msg"></div>
+</div>
+<div class="field-group field-editable" data-iso-path="AppHdr.AppHdr.Prty" data-form-name="AH_AppHdr_Prty" data-required="false">
+  <label class="control-label" for="AH_AppHdr_Prty">
+    优先级 <span class="en">Priority (Prty)</span>
+    
+    <span class="mult-tag">[0..1]</span>
+  </label>
+  <select class="form-control" id="AH_AppHdr_Prty" name="AH_AppHdr_Prty" data-prefix="AH" data-tag="Prty" data-iso-path="AppHdr.AppHdr.Prty" data-form-name="AH_AppHdr_Prty" data-type-code="text">
+    <option value="">-- 请选择 / Please select --</option>
+    <option value="HIGH">HIGH - 高 / High</option>
+    <option value="NORM">NORM - 普通 / Normal</option>
+</select>
+  
+  <div class="error-msg"></div>
+</div>
+</div>
+<div class="panel panel-default">
+  <div class="panel-heading collapsed" data-toggle="collapse" data-target="#collapse_AH_AppHdr_Rltd">
+    <h4 class="panel-title">
+      关联 / Related <span class="label label-info">可选 / Optional</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_AH_AppHdr_Rltd" class="panel-body collapse ">
+    <div class="field-grid">
+<div class="field-group field-editable" data-iso-path="AppHdr.AppHdr.Rltd.CharSet" data-form-name="AH_AppHdr_Rltd_CharSet" data-required="false">
+  <label class="control-label" for="AH_AppHdr_Rltd_CharSet">
+    字符集 <span class="en">Character Set (CharSet)</span>
+    
+    <span class="mult-tag">[0..1]</span>
+  </label>
+  <input type="text" class="form-control" id="AH_AppHdr_Rltd_CharSet" name="AH_AppHdr_Rltd_CharSet" data-prefix="AH" data-tag="CharSet" data-iso-path="AppHdr.AppHdr.Rltd.CharSet" data-form-name="AH_AppHdr_Rltd_CharSet" data-type-code="text">
+  
+  <div class="error-msg"></div>
+</div>
+</div>
+<div class="panel panel-default">
+  <div class="panel-heading" data-toggle="collapse" data-target="#collapse_AH_AppHdr_Rltd_Fr">
+    <h4 class="panel-title">
+      发送方 / From <span class="label label-danger">必填 / Required</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_AH_AppHdr_Rltd_Fr" class="panel-body collapse in">
+    <div class="panel panel-default">
+  <div class="panel-heading" data-toggle="collapse" data-target="#collapse_AH_AppHdr_Rltd_Fr_FIId">
+    <h4 class="panel-title">
+      金融机构标识 / Financial Institution Identification <span class="label label-danger">必填 / Required</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_AH_AppHdr_Rltd_Fr_FIId" class="panel-body collapse in">
+    <div class="panel panel-default">
+  <div class="panel-heading" data-toggle="collapse" data-target="#collapse_AH_AppHdr_Rltd_Fr_FIId_FinInstnId">
+    <h4 class="panel-title">
+      金融机构标识 / Financial Institution Identification <span class="label label-danger">必填 / Required</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_AH_AppHdr_Rltd_Fr_FIId_FinInstnId" class="panel-body collapse in">
+    <div class="field-grid">
+<div class="field-group field-required" data-iso-path="AppHdr.AppHdr.Rltd.Fr.FIId.FinInstnId.BICFI" data-form-name="AH_AppHdr_Rltd_Fr_FIId_FinInstnId_BICFI" data-required="true">
+  <label class="control-label" for="AH_AppHdr_Rltd_Fr_FIId_FinInstnId_BICFI">
+    金融机构BIC <span class="en">BICFI (BICFI)</span>
+    <span class="required text-danger">*</span>
+    <span class="mult-tag">[1..1]</span>
+  </label>
+  <input type="text" class="form-control" id="AH_AppHdr_Rltd_Fr_FIId_FinInstnId_BICFI" name="AH_AppHdr_Rltd_Fr_FIId_FinInstnId_BICFI" data-prefix="AH" data-tag="BICFI" data-iso-path="AppHdr.AppHdr.Rltd.Fr.FIId.FinInstnId.BICFI" data-form-name="AH_AppHdr_Rltd_Fr_FIId_FinInstnId_BICFI" data-type-code="text">
+  
+  <div class="error-msg"></div>
+</div>
+</div>
+<div class="panel panel-default">
+  <div class="panel-heading collapsed" data-toggle="collapse" data-target="#collapse_AH_AppHdr_Rltd_Fr_FIId_FinInstnId_ClrSysMmbId">
+    <h4 class="panel-title">
+      清算系统成员标识 / Clearing System Member Identification <span class="label label-info">可选 / Optional</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_AH_AppHdr_Rltd_Fr_FIId_FinInstnId_ClrSysMmbId" class="panel-body collapse ">
+    <div class="panel panel-default">
+  <div class="panel-heading" data-toggle="collapse" data-target="#collapse_AH_AppHdr_Rltd_Fr_FIId_FinInstnId_ClrSysMmbId_ClrSysId">
+    <h4 class="panel-title">
+      清算系统标识 / Clearing System Identification <span class="label label-danger">必填 / Required</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_AH_AppHdr_Rltd_Fr_FIId_FinInstnId_ClrSysMmbId_ClrSysId" class="panel-body collapse in">
+    <div class="field-grid">
+<div class="field-group field-required" data-iso-path="AppHdr.AppHdr.Rltd.Fr.FIId.FinInstnId.ClrSysMmbId.ClrSysId.Cd" data-form-name="AH_AppHdr_Rltd_Fr_FIId_FinInstnId_ClrSysMmbId_ClrSysId_Cd" data-required="true">
+  <label class="control-label" for="AH_AppHdr_Rltd_Fr_FIId_FinInstnId_ClrSysMmbId_ClrSysId_Cd">
+    代码 <span class="en">Code (Cd)</span>
+    <span class="required text-danger">*</span>
+    <span class="mult-tag">[1..1]</span>
+  </label>
+  <input type="text" class="form-control" id="AH_AppHdr_Rltd_Fr_FIId_FinInstnId_ClrSysMmbId_ClrSysId_Cd" name="AH_AppHdr_Rltd_Fr_FIId_FinInstnId_ClrSysMmbId_ClrSysId_Cd" data-prefix="AH" data-tag="Cd" data-iso-path="AppHdr.AppHdr.Rltd.Fr.FIId.FinInstnId.ClrSysMmbId.ClrSysId.Cd" data-form-name="AH_AppHdr_Rltd_Fr_FIId_FinInstnId_ClrSysMmbId_ClrSysId_Cd" data-type-code="text" maxlength="5">
+  <div class="hint">最大长度 / Max: 5</div>
+  <div class="error-msg"></div>
+</div>
+</div>
+  </div>
+</div>
+<div class="field-grid">
+<div class="field-group field-required" data-iso-path="AppHdr.AppHdr.Rltd.Fr.FIId.FinInstnId.ClrSysMmbId.MmbId" data-form-name="AH_AppHdr_Rltd_Fr_FIId_FinInstnId_ClrSysMmbId_MmbId" data-required="true">
+  <label class="control-label" for="AH_AppHdr_Rltd_Fr_FIId_FinInstnId_ClrSysMmbId_MmbId">
+    成员标识 <span class="en">Member Identification (MmbId)</span>
+    <span class="required text-danger">*</span>
+    <span class="mult-tag">[1..1]</span>
+  </label>
+  <input type="text" class="form-control" id="AH_AppHdr_Rltd_Fr_FIId_FinInstnId_ClrSysMmbId_MmbId" name="AH_AppHdr_Rltd_Fr_FIId_FinInstnId_ClrSysMmbId_MmbId" data-prefix="AH" data-tag="MmbId" data-iso-path="AppHdr.AppHdr.Rltd.Fr.FIId.FinInstnId.ClrSysMmbId.MmbId" data-form-name="AH_AppHdr_Rltd_Fr_FIId_FinInstnId_ClrSysMmbId_MmbId" data-type-code="text" maxlength="35">
+  <div class="hint">最大长度 / Max: 35</div>
+  <div class="error-msg"></div>
+</div>
+</div>
+  </div>
+</div>
+<div class="field-grid">
+<div class="field-group field-editable" data-iso-path="AppHdr.AppHdr.Rltd.Fr.FIId.FinInstnId.LEI" data-form-name="AH_AppHdr_Rltd_Fr_FIId_FinInstnId_LEI" data-required="false">
+  <label class="control-label" for="AH_AppHdr_Rltd_Fr_FIId_FinInstnId_LEI">
+    法人实体标识 <span class="en">LEI (LEI)</span>
+    
+    <span class="mult-tag">[0..1]</span>
+  </label>
+  <input type="text" class="form-control" id="AH_AppHdr_Rltd_Fr_FIId_FinInstnId_LEI" name="AH_AppHdr_Rltd_Fr_FIId_FinInstnId_LEI" data-prefix="AH" data-tag="LEI" data-iso-path="AppHdr.AppHdr.Rltd.Fr.FIId.FinInstnId.LEI" data-form-name="AH_AppHdr_Rltd_Fr_FIId_FinInstnId_LEI" data-type-code="text">
+  
+  <div class="error-msg"></div>
+</div>
+</div>
+  </div>
+</div>
+  </div>
+</div>
+  </div>
+</div>
+<div class="panel panel-default">
+  <div class="panel-heading" data-toggle="collapse" data-target="#collapse_AH_AppHdr_Rltd_To">
+    <h4 class="panel-title">
+      接收方 / To <span class="label label-danger">必填 / Required</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_AH_AppHdr_Rltd_To" class="panel-body collapse in">
+    <div class="panel panel-default">
+  <div class="panel-heading" data-toggle="collapse" data-target="#collapse_AH_AppHdr_Rltd_To_FIId">
+    <h4 class="panel-title">
+      金融机构标识 / Financial Institution Identification <span class="label label-danger">必填 / Required</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_AH_AppHdr_Rltd_To_FIId" class="panel-body collapse in">
+    <div class="panel panel-default">
+  <div class="panel-heading" data-toggle="collapse" data-target="#collapse_AH_AppHdr_Rltd_To_FIId_FinInstnId">
+    <h4 class="panel-title">
+      金融机构标识 / Financial Institution Identification <span class="label label-danger">必填 / Required</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_AH_AppHdr_Rltd_To_FIId_FinInstnId" class="panel-body collapse in">
+    <div class="field-grid">
+<div class="field-group field-required" data-iso-path="AppHdr.AppHdr.Rltd.To.FIId.FinInstnId.BICFI" data-form-name="AH_AppHdr_Rltd_To_FIId_FinInstnId_BICFI" data-required="true">
+  <label class="control-label" for="AH_AppHdr_Rltd_To_FIId_FinInstnId_BICFI">
+    金融机构BIC <span class="en">BICFI (BICFI)</span>
+    <span class="required text-danger">*</span>
+    <span class="mult-tag">[1..1]</span>
+  </label>
+  <input type="text" class="form-control" id="AH_AppHdr_Rltd_To_FIId_FinInstnId_BICFI" name="AH_AppHdr_Rltd_To_FIId_FinInstnId_BICFI" data-prefix="AH" data-tag="BICFI" data-iso-path="AppHdr.AppHdr.Rltd.To.FIId.FinInstnId.BICFI" data-form-name="AH_AppHdr_Rltd_To_FIId_FinInstnId_BICFI" data-type-code="text">
+  
+  <div class="error-msg"></div>
+</div>
+</div>
+<div class="panel panel-default">
+  <div class="panel-heading collapsed" data-toggle="collapse" data-target="#collapse_AH_AppHdr_Rltd_To_FIId_FinInstnId_ClrSysMmbId">
+    <h4 class="panel-title">
+      清算系统成员标识 / Clearing System Member Identification <span class="label label-info">可选 / Optional</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_AH_AppHdr_Rltd_To_FIId_FinInstnId_ClrSysMmbId" class="panel-body collapse ">
+    <div class="panel panel-default">
+  <div class="panel-heading" data-toggle="collapse" data-target="#collapse_AH_AppHdr_Rltd_To_FIId_FinInstnId_ClrSysMmbId_ClrSysId">
+    <h4 class="panel-title">
+      清算系统标识 / Clearing System Identification <span class="label label-danger">必填 / Required</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_AH_AppHdr_Rltd_To_FIId_FinInstnId_ClrSysMmbId_ClrSysId" class="panel-body collapse in">
+    <div class="field-grid">
+<div class="field-group field-required" data-iso-path="AppHdr.AppHdr.Rltd.To.FIId.FinInstnId.ClrSysMmbId.ClrSysId.Cd" data-form-name="AH_AppHdr_Rltd_To_FIId_FinInstnId_ClrSysMmbId_ClrSysId_Cd" data-required="true">
+  <label class="control-label" for="AH_AppHdr_Rltd_To_FIId_FinInstnId_ClrSysMmbId_ClrSysId_Cd">
+    代码 <span class="en">Code (Cd)</span>
+    <span class="required text-danger">*</span>
+    <span class="mult-tag">[1..1]</span>
+  </label>
+  <input type="text" class="form-control" id="AH_AppHdr_Rltd_To_FIId_FinInstnId_ClrSysMmbId_ClrSysId_Cd" name="AH_AppHdr_Rltd_To_FIId_FinInstnId_ClrSysMmbId_ClrSysId_Cd" data-prefix="AH" data-tag="Cd" data-iso-path="AppHdr.AppHdr.Rltd.To.FIId.FinInstnId.ClrSysMmbId.ClrSysId.Cd" data-form-name="AH_AppHdr_Rltd_To_FIId_FinInstnId_ClrSysMmbId_ClrSysId_Cd" data-type-code="text" maxlength="5">
+  <div class="hint">最大长度 / Max: 5</div>
+  <div class="error-msg"></div>
+</div>
+</div>
+  </div>
+</div>
+<div class="field-grid">
+<div class="field-group field-required" data-iso-path="AppHdr.AppHdr.Rltd.To.FIId.FinInstnId.ClrSysMmbId.MmbId" data-form-name="AH_AppHdr_Rltd_To_FIId_FinInstnId_ClrSysMmbId_MmbId" data-required="true">
+  <label class="control-label" for="AH_AppHdr_Rltd_To_FIId_FinInstnId_ClrSysMmbId_MmbId">
+    成员标识 <span class="en">Member Identification (MmbId)</span>
+    <span class="required text-danger">*</span>
+    <span class="mult-tag">[1..1]</span>
+  </label>
+  <input type="text" class="form-control" id="AH_AppHdr_Rltd_To_FIId_FinInstnId_ClrSysMmbId_MmbId" name="AH_AppHdr_Rltd_To_FIId_FinInstnId_ClrSysMmbId_MmbId" data-prefix="AH" data-tag="MmbId" data-iso-path="AppHdr.AppHdr.Rltd.To.FIId.FinInstnId.ClrSysMmbId.MmbId" data-form-name="AH_AppHdr_Rltd_To_FIId_FinInstnId_ClrSysMmbId_MmbId" data-type-code="text" maxlength="35">
+  <div class="hint">最大长度 / Max: 35</div>
+  <div class="error-msg"></div>
+</div>
+</div>
+  </div>
+</div>
+<div class="field-grid">
+<div class="field-group field-editable" data-iso-path="AppHdr.AppHdr.Rltd.To.FIId.FinInstnId.LEI" data-form-name="AH_AppHdr_Rltd_To_FIId_FinInstnId_LEI" data-required="false">
+  <label class="control-label" for="AH_AppHdr_Rltd_To_FIId_FinInstnId_LEI">
+    法人实体标识 <span class="en">LEI (LEI)</span>
+    
+    <span class="mult-tag">[0..1]</span>
+  </label>
+  <input type="text" class="form-control" id="AH_AppHdr_Rltd_To_FIId_FinInstnId_LEI" name="AH_AppHdr_Rltd_To_FIId_FinInstnId_LEI" data-prefix="AH" data-tag="LEI" data-iso-path="AppHdr.AppHdr.Rltd.To.FIId.FinInstnId.LEI" data-form-name="AH_AppHdr_Rltd_To_FIId_FinInstnId_LEI" data-type-code="text">
+  
+  <div class="error-msg"></div>
+</div>
+</div>
+  </div>
+</div>
+  </div>
+</div>
+  </div>
+</div>
+<div class="field-grid">
+<div class="field-group field-required" data-iso-path="AppHdr.AppHdr.Rltd.BizMsgIdr" data-form-name="AH_AppHdr_Rltd_BizMsgIdr" data-required="true">
+  <label class="control-label" for="AH_AppHdr_Rltd_BizMsgIdr">
+    业务消息标识 <span class="en">Business Message Identifier (BizMsgIdr)</span>
+    <span class="required text-danger">*</span>
+    <span class="mult-tag">[1..1]</span>
+  </label>
+  <input type="text" class="form-control" id="AH_AppHdr_Rltd_BizMsgIdr" name="AH_AppHdr_Rltd_BizMsgIdr" data-prefix="AH" data-tag="BizMsgIdr" data-iso-path="AppHdr.AppHdr.Rltd.BizMsgIdr" data-form-name="AH_AppHdr_Rltd_BizMsgIdr" data-type-code="text" maxlength="35">
+  <div class="hint">最大长度 / Max: 35</div>
+  <div class="error-msg"></div>
+</div>
+<div class="field-group field-required" data-iso-path="AppHdr.AppHdr.Rltd.MsgDefIdr" data-form-name="AH_AppHdr_Rltd_MsgDefIdr" data-required="true">
+  <label class="control-label" for="AH_AppHdr_Rltd_MsgDefIdr">
+    消息定义标识 <span class="en">Message Definition Identifier (MsgDefIdr)</span>
+    <span class="required text-danger">*</span>
+    <span class="mult-tag">[1..1]</span>
+  </label>
+  <input type="text" class="form-control" id="AH_AppHdr_Rltd_MsgDefIdr" name="AH_AppHdr_Rltd_MsgDefIdr" data-prefix="AH" data-tag="MsgDefIdr" data-iso-path="AppHdr.AppHdr.Rltd.MsgDefIdr" data-form-name="AH_AppHdr_Rltd_MsgDefIdr" data-type-code="text" maxlength="35">
+  <div class="hint">最大长度 / Max: 35</div>
+  <div class="error-msg"></div>
+</div>
+</div>
+<div class="field-grid">
+<div class="field-group field-required" data-iso-path="AppHdr.AppHdr.Rltd.BizSvc" data-form-name="AH_AppHdr_Rltd_BizSvc" data-required="true">
+  <label class="control-label" for="AH_AppHdr_Rltd_BizSvc">
+    业务服务 <span class="en">Business Service (BizSvc)</span>
+    <span class="required text-danger">*</span>
+    <span class="mult-tag">[1..1]</span>
+  </label>
+  <input type="text" class="form-control" id="AH_AppHdr_Rltd_BizSvc" name="AH_AppHdr_Rltd_BizSvc" data-prefix="AH" data-tag="BizSvc" data-iso-path="AppHdr.AppHdr.Rltd.BizSvc" data-form-name="AH_AppHdr_Rltd_BizSvc" data-type-code="text" maxlength="35">
+  <div class="hint">最大长度 / Max: 35</div>
+  <div class="error-msg"></div>
+</div>
+<div class="field-group field-required" data-iso-path="AppHdr.AppHdr.Rltd.CreDt" data-form-name="AH_AppHdr_Rltd_CreDt" data-required="true">
+  <label class="control-label" for="AH_AppHdr_Rltd_CreDt">
+    创建日期 <span class="en">Creation Date (CreDt)</span>
+    <span class="required text-danger">*</span>
+    <span class="mult-tag">[1..1]</span>
+  </label>
+  <input type="text" class="form-control" id="AH_AppHdr_Rltd_CreDt" name="AH_AppHdr_Rltd_CreDt" data-prefix="AH" data-tag="CreDt" data-iso-path="AppHdr.AppHdr.Rltd.CreDt" data-form-name="AH_AppHdr_Rltd_CreDt" data-type-code="dateTime" placeholder="YYYY-MM-DDThh:mm:ss">
+  
+  <div class="error-msg"></div>
+</div>
+</div>
+<div class="field-grid">
+<div class="field-group field-editable" data-iso-path="AppHdr.AppHdr.Rltd.CpyDplct" data-form-name="AH_AppHdr_Rltd_CpyDplct" data-required="false">
+  <label class="control-label" for="AH_AppHdr_Rltd_CpyDplct">
+    副本/重复 <span class="en">Copy Duplicate (CpyDplct)</span>
+    
+    <span class="mult-tag">[0..1]</span>
+  </label>
+  <select class="form-control" id="AH_AppHdr_Rltd_CpyDplct" name="AH_AppHdr_Rltd_CpyDplct" data-prefix="AH" data-tag="CpyDplct" data-iso-path="AppHdr.AppHdr.Rltd.CpyDplct" data-form-name="AH_AppHdr_Rltd_CpyDplct" data-type-code="text">
+    <option value="">-- 请选择 / Please select --</option>
+    <option value="CODU">CODU - 副本重复 / Copy Duplicate</option>
+    <option value="COPY">COPY - 副本 / Copy</option>
+    <option value="DUPL">DUPL - 重复 / Duplicate</option>
+</select>
+  
+  <div class="error-msg"></div>
+</div>
+<div class="field-group field-editable" data-iso-path="AppHdr.AppHdr.Rltd.Prty" data-form-name="AH_AppHdr_Rltd_Prty" data-required="false">
+  <label class="control-label" for="AH_AppHdr_Rltd_Prty">
+    优先级 <span class="en">Priority (Prty)</span>
+    
+    <span class="mult-tag">[0..1]</span>
+  </label>
+  <select class="form-control" id="AH_AppHdr_Rltd_Prty" name="AH_AppHdr_Rltd_Prty" data-prefix="AH" data-tag="Prty" data-iso-path="AppHdr.AppHdr.Rltd.Prty" data-form-name="AH_AppHdr_Rltd_Prty" data-type-code="text">
+    <option value="">-- 请选择 / Please select --</option>
+    <option value="HIGH">HIGH - 高 / High</option>
+    <option value="NORM">NORM - 普通 / Normal</option>
+</select>
+  
+  <div class="error-msg"></div>
+</div>
+</div>
+  </div>
+</div>
+  </div>
+</div>
+      <!-- Section: Document -->
+      <div class="section-divider"><span>报文正文 / Document</span></div>
+<div class="panel panel-default">
+  <div class="panel-heading" data-toggle="collapse" data-target="#collapse_DOC_">
+    <h4 class="panel-title">
+      文档 / Document <span class="label label-danger">必填 / Required</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_DOC_" class="panel-body collapse in">
+    <div class="panel panel-default">
+  <div class="panel-heading" data-toggle="collapse" data-target="#collapse_DOC_RsltnOfInvstgtn">
+    <h4 class="panel-title">
+      调查处理V09 (camt.029.001.09) / Resolution Of Investigation V09 (camt.029.001.09) <span class="label label-danger">必填 / Required</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_DOC_RsltnOfInvstgtn" class="panel-body collapse in">
+    <div class="panel panel-default">
+  <div class="panel-heading" data-toggle="collapse" data-target="#collapse_DOC_RsltnOfInvstgtn_Assgnmt">
+    <h4 class="panel-title">
+      任务分配 / Assignment <span class="label label-danger">必填 / Required</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_DOC_RsltnOfInvstgtn_Assgnmt" class="panel-body collapse in">
+    <div class="field-grid">
+<div class="field-group field-required" data-iso-path="Document.RsltnOfInvstgtn.Assgnmt.Id" data-form-name="DOC_RsltnOfInvstgtn_Assgnmt_Id" data-required="true">
+  <label class="control-label" for="DOC_RsltnOfInvstgtn_Assgnmt_Id">
+    标识 <span class="en">Identification (Id)</span>
+    <span class="required text-danger">*</span>
+    <span class="mult-tag">[1..1]</span>
+  </label>
+  <input type="text" class="form-control" id="DOC_RsltnOfInvstgtn_Assgnmt_Id" name="DOC_RsltnOfInvstgtn_Assgnmt_Id" data-prefix="DOC" data-tag="Id" data-iso-path="Document.RsltnOfInvstgtn.Assgnmt.Id" data-form-name="DOC_RsltnOfInvstgtn_Assgnmt_Id" data-type-code="text" maxlength="35">
+  <div class="hint">最大长度 / Max: 35</div>
+  <div class="error-msg"></div>
+</div>
+</div>
+<div class="panel panel-default">
+  <div class="panel-heading" data-toggle="collapse" data-target="#collapse_DOC_RsltnOfInvstgtn_Assgnmt_Assgnr">
+    <h4 class="panel-title">
+      转让方 / Assigner <span class="label label-danger">必填 / Required</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_DOC_RsltnOfInvstgtn_Assgnmt_Assgnr" class="panel-body collapse in">
+    <div class="panel panel-default">
+  <div class="panel-heading" data-toggle="collapse" data-target="#collapse_DOC_RsltnOfInvstgtn_Assgnmt_Assgnr_Agt">
+    <h4 class="panel-title">
+      代理行 / Agent <span class="label label-danger">必填 / Required</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_DOC_RsltnOfInvstgtn_Assgnmt_Assgnr_Agt" class="panel-body collapse in">
+    <div class="panel panel-default">
+  <div class="panel-heading" data-toggle="collapse" data-target="#collapse_DOC_RsltnOfInvstgtn_Assgnmt_Assgnr_Agt_FinInstnId">
+    <h4 class="panel-title">
+      金融机构标识 / Financial Institution Identification <span class="label label-danger">必填 / Required</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_DOC_RsltnOfInvstgtn_Assgnmt_Assgnr_Agt_FinInstnId" class="panel-body collapse in">
+    <div class="field-grid">
+<div class="field-group field-required" data-iso-path="Document.RsltnOfInvstgtn.Assgnmt.Assgnr.Agt.FinInstnId.BICFI" data-form-name="DOC_RsltnOfInvstgtn_Assgnmt_Assgnr_Agt_FinInstnId_BICFI" data-required="true">
+  <label class="control-label" for="DOC_RsltnOfInvstgtn_Assgnmt_Assgnr_Agt_FinInstnId_BICFI">
+    金融机构BIC <span class="en">BICFI (BICFI)</span>
+    <span class="required text-danger">*</span>
+    <span class="mult-tag">[1..1]</span>
+  </label>
+  <input type="text" class="form-control" id="DOC_RsltnOfInvstgtn_Assgnmt_Assgnr_Agt_FinInstnId_BICFI" name="DOC_RsltnOfInvstgtn_Assgnmt_Assgnr_Agt_FinInstnId_BICFI" data-prefix="DOC" data-tag="BICFI" data-iso-path="Document.RsltnOfInvstgtn.Assgnmt.Assgnr.Agt.FinInstnId.BICFI" data-form-name="DOC_RsltnOfInvstgtn_Assgnmt_Assgnr_Agt_FinInstnId_BICFI" data-type-code="text">
+  
+  <div class="error-msg"></div>
+</div>
+</div>
+<div class="panel panel-default">
+  <div class="panel-heading collapsed" data-toggle="collapse" data-target="#collapse_DOC_RsltnOfInvstgtn_Assgnmt_Assgnr_Agt_FinInstnId_ClrSysMmbId">
+    <h4 class="panel-title">
+      清算系统成员标识 / Clearing System Member Identification <span class="label label-info">可选 / Optional</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_DOC_RsltnOfInvstgtn_Assgnmt_Assgnr_Agt_FinInstnId_ClrSysMmbId" class="panel-body collapse ">
+    <div class="panel panel-default">
+  <div class="panel-heading" data-toggle="collapse" data-target="#collapse_DOC_RsltnOfInvstgtn_Assgnmt_Assgnr_Agt_FinInstnId_ClrSysMmbId_ClrSysId">
+    <h4 class="panel-title">
+      清算系统标识 / Clearing System Identification <span class="label label-danger">必填 / Required</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_DOC_RsltnOfInvstgtn_Assgnmt_Assgnr_Agt_FinInstnId_ClrSysMmbId_ClrSysId" class="panel-body collapse in">
+    <div class="field-grid">
+<div class="field-group field-required" data-iso-path="Document.RsltnOfInvstgtn.Assgnmt.Assgnr.Agt.FinInstnId.ClrSysMmbId.ClrSysId.Cd" data-form-name="DOC_RsltnOfInvstgtn_Assgnmt_Assgnr_Agt_FinInstnId_ClrSysMmbId_ClrSysId_Cd" data-required="true">
+  <label class="control-label" for="DOC_RsltnOfInvstgtn_Assgnmt_Assgnr_Agt_FinInstnId_ClrSysMmbId_ClrSysId_Cd">
+    代码 <span class="en">Code (Cd)</span>
+    <span class="required text-danger">*</span>
+    <span class="mult-tag">[1..1]</span>
+  </label>
+  <input type="text" class="form-control" id="DOC_RsltnOfInvstgtn_Assgnmt_Assgnr_Agt_FinInstnId_ClrSysMmbId_ClrSysId_Cd" name="DOC_RsltnOfInvstgtn_Assgnmt_Assgnr_Agt_FinInstnId_ClrSysMmbId_ClrSysId_Cd" data-prefix="DOC" data-tag="Cd" data-iso-path="Document.RsltnOfInvstgtn.Assgnmt.Assgnr.Agt.FinInstnId.ClrSysMmbId.ClrSysId.Cd" data-form-name="DOC_RsltnOfInvstgtn_Assgnmt_Assgnr_Agt_FinInstnId_ClrSysMmbId_ClrSysId_Cd" data-type-code="text" maxlength="5">
+  <div class="hint">最大长度 / Max: 5</div>
+  <div class="error-msg"></div>
+</div>
+</div>
+  </div>
+</div>
+<div class="field-grid">
+<div class="field-group field-required" data-iso-path="Document.RsltnOfInvstgtn.Assgnmt.Assgnr.Agt.FinInstnId.ClrSysMmbId.MmbId" data-form-name="DOC_RsltnOfInvstgtn_Assgnmt_Assgnr_Agt_FinInstnId_ClrSysMmbId_MmbId" data-required="true">
+  <label class="control-label" for="DOC_RsltnOfInvstgtn_Assgnmt_Assgnr_Agt_FinInstnId_ClrSysMmbId_MmbId">
+    成员标识 <span class="en">Member Identification (MmbId)</span>
+    <span class="required text-danger">*</span>
+    <span class="mult-tag">[1..1]</span>
+  </label>
+  <input type="text" class="form-control" id="DOC_RsltnOfInvstgtn_Assgnmt_Assgnr_Agt_FinInstnId_ClrSysMmbId_MmbId" name="DOC_RsltnOfInvstgtn_Assgnmt_Assgnr_Agt_FinInstnId_ClrSysMmbId_MmbId" data-prefix="DOC" data-tag="MmbId" data-iso-path="Document.RsltnOfInvstgtn.Assgnmt.Assgnr.Agt.FinInstnId.ClrSysMmbId.MmbId" data-form-name="DOC_RsltnOfInvstgtn_Assgnmt_Assgnr_Agt_FinInstnId_ClrSysMmbId_MmbId" data-type-code="text" maxlength="35">
+  <div class="hint">最大长度 / Max: 35</div>
+  <div class="error-msg"></div>
+</div>
+</div>
+  </div>
+</div>
+<div class="field-grid">
+<div class="field-group field-editable" data-iso-path="Document.RsltnOfInvstgtn.Assgnmt.Assgnr.Agt.FinInstnId.LEI" data-form-name="DOC_RsltnOfInvstgtn_Assgnmt_Assgnr_Agt_FinInstnId_LEI" data-required="false">
+  <label class="control-label" for="DOC_RsltnOfInvstgtn_Assgnmt_Assgnr_Agt_FinInstnId_LEI">
+    法人实体标识 <span class="en">LEI (LEI)</span>
+    
+    <span class="mult-tag">[0..1]</span>
+  </label>
+  <input type="text" class="form-control" id="DOC_RsltnOfInvstgtn_Assgnmt_Assgnr_Agt_FinInstnId_LEI" name="DOC_RsltnOfInvstgtn_Assgnmt_Assgnr_Agt_FinInstnId_LEI" data-prefix="DOC" data-tag="LEI" data-iso-path="Document.RsltnOfInvstgtn.Assgnmt.Assgnr.Agt.FinInstnId.LEI" data-form-name="DOC_RsltnOfInvstgtn_Assgnmt_Assgnr_Agt_FinInstnId_LEI" data-type-code="text">
+  
+  <div class="error-msg"></div>
+</div>
+</div>
+  </div>
+</div>
+  </div>
+</div>
+  </div>
+</div>
+<div class="panel panel-default">
+  <div class="panel-heading" data-toggle="collapse" data-target="#collapse_DOC_RsltnOfInvstgtn_Assgnmt_Assgne">
+    <h4 class="panel-title">
+      受让方 / Assignee <span class="label label-danger">必填 / Required</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_DOC_RsltnOfInvstgtn_Assgnmt_Assgne" class="panel-body collapse in">
+    <div class="panel panel-default">
+  <div class="panel-heading" data-toggle="collapse" data-target="#collapse_DOC_RsltnOfInvstgtn_Assgnmt_Assgne_Agt">
+    <h4 class="panel-title">
+      代理行 / Agent <span class="label label-danger">必填 / Required</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_DOC_RsltnOfInvstgtn_Assgnmt_Assgne_Agt" class="panel-body collapse in">
+    <div class="panel panel-default">
+  <div class="panel-heading" data-toggle="collapse" data-target="#collapse_DOC_RsltnOfInvstgtn_Assgnmt_Assgne_Agt_FinInstnId">
+    <h4 class="panel-title">
+      金融机构标识 / Financial Institution Identification <span class="label label-danger">必填 / Required</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_DOC_RsltnOfInvstgtn_Assgnmt_Assgne_Agt_FinInstnId" class="panel-body collapse in">
+    <div class="field-grid">
+<div class="field-group field-required" data-iso-path="Document.RsltnOfInvstgtn.Assgnmt.Assgne.Agt.FinInstnId.BICFI" data-form-name="DOC_RsltnOfInvstgtn_Assgnmt_Assgne_Agt_FinInstnId_BICFI" data-required="true">
+  <label class="control-label" for="DOC_RsltnOfInvstgtn_Assgnmt_Assgne_Agt_FinInstnId_BICFI">
+    金融机构BIC <span class="en">BICFI (BICFI)</span>
+    <span class="required text-danger">*</span>
+    <span class="mult-tag">[1..1]</span>
+  </label>
+  <input type="text" class="form-control" id="DOC_RsltnOfInvstgtn_Assgnmt_Assgne_Agt_FinInstnId_BICFI" name="DOC_RsltnOfInvstgtn_Assgnmt_Assgne_Agt_FinInstnId_BICFI" data-prefix="DOC" data-tag="BICFI" data-iso-path="Document.RsltnOfInvstgtn.Assgnmt.Assgne.Agt.FinInstnId.BICFI" data-form-name="DOC_RsltnOfInvstgtn_Assgnmt_Assgne_Agt_FinInstnId_BICFI" data-type-code="text">
+  
+  <div class="error-msg"></div>
+</div>
+</div>
+<div class="panel panel-default">
+  <div class="panel-heading collapsed" data-toggle="collapse" data-target="#collapse_DOC_RsltnOfInvstgtn_Assgnmt_Assgne_Agt_FinInstnId_ClrSysMmbId">
+    <h4 class="panel-title">
+      清算系统成员标识 / Clearing System Member Identification <span class="label label-info">可选 / Optional</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_DOC_RsltnOfInvstgtn_Assgnmt_Assgne_Agt_FinInstnId_ClrSysMmbId" class="panel-body collapse ">
+    <div class="panel panel-default">
+  <div class="panel-heading" data-toggle="collapse" data-target="#collapse_DOC_RsltnOfInvstgtn_Assgnmt_Assgne_Agt_FinInstnId_ClrSysMmbId_ClrSysId">
+    <h4 class="panel-title">
+      清算系统标识 / Clearing System Identification <span class="label label-danger">必填 / Required</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_DOC_RsltnOfInvstgtn_Assgnmt_Assgne_Agt_FinInstnId_ClrSysMmbId_ClrSysId" class="panel-body collapse in">
+    <div class="field-grid">
+<div class="field-group field-required" data-iso-path="Document.RsltnOfInvstgtn.Assgnmt.Assgne.Agt.FinInstnId.ClrSysMmbId.ClrSysId.Cd" data-form-name="DOC_RsltnOfInvstgtn_Assgnmt_Assgne_Agt_FinInstnId_ClrSysMmbId_ClrSysId_Cd" data-required="true">
+  <label class="control-label" for="DOC_RsltnOfInvstgtn_Assgnmt_Assgne_Agt_FinInstnId_ClrSysMmbId_ClrSysId_Cd">
+    代码 <span class="en">Code (Cd)</span>
+    <span class="required text-danger">*</span>
+    <span class="mult-tag">[1..1]</span>
+  </label>
+  <input type="text" class="form-control" id="DOC_RsltnOfInvstgtn_Assgnmt_Assgne_Agt_FinInstnId_ClrSysMmbId_ClrSysId_Cd" name="DOC_RsltnOfInvstgtn_Assgnmt_Assgne_Agt_FinInstnId_ClrSysMmbId_ClrSysId_Cd" data-prefix="DOC" data-tag="Cd" data-iso-path="Document.RsltnOfInvstgtn.Assgnmt.Assgne.Agt.FinInstnId.ClrSysMmbId.ClrSysId.Cd" data-form-name="DOC_RsltnOfInvstgtn_Assgnmt_Assgne_Agt_FinInstnId_ClrSysMmbId_ClrSysId_Cd" data-type-code="text" maxlength="5">
+  <div class="hint">最大长度 / Max: 5</div>
+  <div class="error-msg"></div>
+</div>
+</div>
+  </div>
+</div>
+<div class="field-grid">
+<div class="field-group field-required" data-iso-path="Document.RsltnOfInvstgtn.Assgnmt.Assgne.Agt.FinInstnId.ClrSysMmbId.MmbId" data-form-name="DOC_RsltnOfInvstgtn_Assgnmt_Assgne_Agt_FinInstnId_ClrSysMmbId_MmbId" data-required="true">
+  <label class="control-label" for="DOC_RsltnOfInvstgtn_Assgnmt_Assgne_Agt_FinInstnId_ClrSysMmbId_MmbId">
+    成员标识 <span class="en">Member Identification (MmbId)</span>
+    <span class="required text-danger">*</span>
+    <span class="mult-tag">[1..1]</span>
+  </label>
+  <input type="text" class="form-control" id="DOC_RsltnOfInvstgtn_Assgnmt_Assgne_Agt_FinInstnId_ClrSysMmbId_MmbId" name="DOC_RsltnOfInvstgtn_Assgnmt_Assgne_Agt_FinInstnId_ClrSysMmbId_MmbId" data-prefix="DOC" data-tag="MmbId" data-iso-path="Document.RsltnOfInvstgtn.Assgnmt.Assgne.Agt.FinInstnId.ClrSysMmbId.MmbId" data-form-name="DOC_RsltnOfInvstgtn_Assgnmt_Assgne_Agt_FinInstnId_ClrSysMmbId_MmbId" data-type-code="text" maxlength="35">
+  <div class="hint">最大长度 / Max: 35</div>
+  <div class="error-msg"></div>
+</div>
+</div>
+  </div>
+</div>
+<div class="field-grid">
+<div class="field-group field-editable" data-iso-path="Document.RsltnOfInvstgtn.Assgnmt.Assgne.Agt.FinInstnId.LEI" data-form-name="DOC_RsltnOfInvstgtn_Assgnmt_Assgne_Agt_FinInstnId_LEI" data-required="false">
+  <label class="control-label" for="DOC_RsltnOfInvstgtn_Assgnmt_Assgne_Agt_FinInstnId_LEI">
+    法人实体标识 <span class="en">LEI (LEI)</span>
+    
+    <span class="mult-tag">[0..1]</span>
+  </label>
+  <input type="text" class="form-control" id="DOC_RsltnOfInvstgtn_Assgnmt_Assgne_Agt_FinInstnId_LEI" name="DOC_RsltnOfInvstgtn_Assgnmt_Assgne_Agt_FinInstnId_LEI" data-prefix="DOC" data-tag="LEI" data-iso-path="Document.RsltnOfInvstgtn.Assgnmt.Assgne.Agt.FinInstnId.LEI" data-form-name="DOC_RsltnOfInvstgtn_Assgnmt_Assgne_Agt_FinInstnId_LEI" data-type-code="text">
+  
+  <div class="error-msg"></div>
+</div>
+</div>
+  </div>
+</div>
+  </div>
+</div>
+  </div>
+</div>
+<div class="field-grid">
+<div class="field-group field-required" data-iso-path="Document.RsltnOfInvstgtn.Assgnmt.CreDtTm" data-form-name="DOC_RsltnOfInvstgtn_Assgnmt_CreDtTm" data-required="true">
+  <label class="control-label" for="DOC_RsltnOfInvstgtn_Assgnmt_CreDtTm">
+    创建日期时间 <span class="en">Creation Date Time (CreDtTm)</span>
+    <span class="required text-danger">*</span>
+    <span class="mult-tag">[1..1]</span>
+  </label>
+  <input type="text" class="form-control" id="DOC_RsltnOfInvstgtn_Assgnmt_CreDtTm" name="DOC_RsltnOfInvstgtn_Assgnmt_CreDtTm" data-prefix="DOC" data-tag="CreDtTm" data-iso-path="Document.RsltnOfInvstgtn.Assgnmt.CreDtTm" data-form-name="DOC_RsltnOfInvstgtn_Assgnmt_CreDtTm" data-type-code="dateTime" placeholder="YYYY-MM-DDThh:mm:ss">
+  
+  <div class="error-msg"></div>
+</div>
+</div>
+  </div>
+</div>
+<div class="panel panel-default">
+  <div class="panel-heading" data-toggle="collapse" data-target="#collapse_DOC_RsltnOfInvstgtn_Sts">
+    <h4 class="panel-title">
+      状态 / Status <span class="label label-danger">必填 / Required</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_DOC_RsltnOfInvstgtn_Sts" class="panel-body collapse in">
+    <div class="field-grid">
+<div class="field-group field-required" data-iso-path="Document.RsltnOfInvstgtn.Sts.Conf" data-form-name="DOC_RsltnOfInvstgtn_Sts_Conf" data-required="true">
+  <label class="control-label" for="DOC_RsltnOfInvstgtn_Sts_Conf">
+    确认 <span class="en">Confirmation (Conf)</span>
+    <span class="required text-danger">*</span>
+    <span class="mult-tag">[1..1]</span>
+  </label>
+  <select class="form-control" id="DOC_RsltnOfInvstgtn_Sts_Conf" name="DOC_RsltnOfInvstgtn_Sts_Conf" data-prefix="DOC" data-tag="Conf" data-iso-path="Document.RsltnOfInvstgtn.Sts.Conf" data-form-name="DOC_RsltnOfInvstgtn_Sts_Conf" data-type-code="text">
+    <option value="">-- 请选择 / Please select --</option>
+    <option value="CNCL">CNCL - CNCL / CNCL</option>
+    <option value="PDCR">PDCR - PDCR / PDCR</option>
+    <option value="RJCR">RJCR - RJCR / RJCR</option>
+</select>
+  <div class="hint">最大长度 / Max: 4</div>
+  <div class="error-msg"></div>
+</div>
+</div>
+  </div>
+</div>
+<div class="panel panel-default">
+  <div class="panel-heading" data-toggle="collapse" data-target="#collapse_DOC_RsltnOfInvstgtn_CxlDtls">
+    <h4 class="panel-title">
+      撤销明细 / Cancellation Details <span class="label label-danger">必填 / Required</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_DOC_RsltnOfInvstgtn_CxlDtls" class="panel-body collapse in">
+    <div class="panel panel-default">
+  <div class="panel-heading" data-toggle="collapse" data-target="#collapse_DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts">
+    <h4 class="panel-title">
+      交易信息及状态 / Transaction Information And Status <span class="label label-danger">必填 / Required</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts" class="panel-body collapse in">
+    <div class="field-grid">
+<div class="field-group field-required" data-iso-path="Document.RsltnOfInvstgtn.CxlDtls.TxInfAndSts.CxlStsId" data-form-name="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_CxlStsId" data-required="true">
+  <label class="control-label" for="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_CxlStsId">
+    撤销状态标识 <span class="en">Cancellation Status Identification (CxlStsId)</span>
+    <span class="required text-danger">*</span>
+    <span class="mult-tag">[1..1]</span>
+  </label>
+  <input type="text" class="form-control" id="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_CxlStsId" name="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_CxlStsId" data-prefix="DOC" data-tag="CxlStsId" data-iso-path="Document.RsltnOfInvstgtn.CxlDtls.TxInfAndSts.CxlStsId" data-form-name="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_CxlStsId" data-type-code="text" maxlength="35">
+  <div class="hint">最大长度 / Max: 35</div>
+  <div class="error-msg"></div>
+</div>
+</div>
+<div class="panel panel-default">
+  <div class="panel-heading" data-toggle="collapse" data-target="#collapse_DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_RslvdCase">
+    <h4 class="panel-title">
+      已解决案件 / Resolved Case <span class="label label-danger">必填 / Required</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_RslvdCase" class="panel-body collapse in">
+    <div class="field-grid">
+<div class="field-group field-required" data-iso-path="Document.RsltnOfInvstgtn.CxlDtls.TxInfAndSts.RslvdCase.Id" data-form-name="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_RslvdCase_Id" data-required="true">
+  <label class="control-label" for="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_RslvdCase_Id">
+    标识 <span class="en">Identification (Id)</span>
+    <span class="required text-danger">*</span>
+    <span class="mult-tag">[1..1]</span>
+  </label>
+  <input type="text" class="form-control" id="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_RslvdCase_Id" name="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_RslvdCase_Id" data-prefix="DOC" data-tag="Id" data-iso-path="Document.RsltnOfInvstgtn.CxlDtls.TxInfAndSts.RslvdCase.Id" data-form-name="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_RslvdCase_Id" data-type-code="text" maxlength="35">
+  <div class="hint">最大长度 / Max: 35</div>
+  <div class="error-msg"></div>
+</div>
+</div>
+<div class="panel panel-default">
+  <div class="panel-heading" data-toggle="collapse" data-target="#collapse_DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_RslvdCase_Cretr">
+    <h4 class="panel-title">
+      创建者 / Creator <span class="label label-danger">必填 / Required</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_RslvdCase_Cretr" class="panel-body collapse in">
+    <div class="panel panel-default">
+  <div class="panel-heading collapsed" data-toggle="collapse" data-target="#collapse_DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_RslvdCase_Cretr_Pty">
+    <h4 class="panel-title">
+      当事方 / Party <span class="label label-info">可选 / Optional</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_RslvdCase_Cretr_Pty" class="panel-body collapse"
+       data-component="PartyIdentification"
+       data-path-prefix="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_RslvdCase_Cretr_Pty"
+       data-rendered="false">
+    <div class="component-placeholder text-muted">展开加载 / Expand to load</div>
+  </div>
+</div>
+<div class="panel panel-default">
+  <div class="panel-heading collapsed" data-toggle="collapse" data-target="#collapse_DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_RslvdCase_Cretr_Agt">
+    <h4 class="panel-title">
+      代理行 / Agent <span class="label label-info">可选 / Optional</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_RslvdCase_Cretr_Agt" class="panel-body collapse ">
+    <div class="panel panel-default">
+  <div class="panel-heading collapsed" data-toggle="collapse" data-target="#collapse_DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_RslvdCase_Cretr_Agt_FinInstnId">
+    <h4 class="panel-title">
+      金融机构标识 / Financial Institution Identification <span class="label label-info">可选 / Optional</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_RslvdCase_Cretr_Agt_FinInstnId" class="panel-body collapse"
+       data-component="FinInstnId"
+       data-path-prefix="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_RslvdCase_Cretr_Agt_FinInstnId"
+       data-rendered="false">
+    <div class="component-placeholder text-muted">展开加载 / Expand to load</div>
+  </div>
+</div>
+  </div>
+</div>
+  </div>
+</div>
+  </div>
+</div>
+<div class="panel panel-default">
+  <div class="panel-heading" data-toggle="collapse" data-target="#collapse_DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_OrgnlGrpInf">
+    <h4 class="panel-title">
+      原始组信息 / Original Group Information <span class="label label-danger">必填 / Required</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_OrgnlGrpInf" class="panel-body collapse in">
+    <div class="field-grid">
+<div class="field-group field-required" data-iso-path="Document.RsltnOfInvstgtn.CxlDtls.TxInfAndSts.OrgnlGrpInf.OrgnlMsgId" data-form-name="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_OrgnlGrpInf_OrgnlMsgId" data-required="true">
+  <label class="control-label" for="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_OrgnlGrpInf_OrgnlMsgId">
+    原始消息标识 <span class="en">Original Message Identification (OrgnlMsgId)</span>
+    <span class="required text-danger">*</span>
+    <span class="mult-tag">[1..1]</span>
+  </label>
+  <input type="text" class="form-control" id="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_OrgnlGrpInf_OrgnlMsgId" name="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_OrgnlGrpInf_OrgnlMsgId" data-prefix="DOC" data-tag="OrgnlMsgId" data-iso-path="Document.RsltnOfInvstgtn.CxlDtls.TxInfAndSts.OrgnlGrpInf.OrgnlMsgId" data-form-name="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_OrgnlGrpInf_OrgnlMsgId" data-type-code="text" maxlength="35">
+  <div class="hint">最大长度 / Max: 35</div>
+  <div class="error-msg"></div>
+</div>
+<div class="field-group field-required" data-iso-path="Document.RsltnOfInvstgtn.CxlDtls.TxInfAndSts.OrgnlGrpInf.OrgnlMsgNmId" data-form-name="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_OrgnlGrpInf_OrgnlMsgNmId" data-required="true">
+  <label class="control-label" for="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_OrgnlGrpInf_OrgnlMsgNmId">
+    原始消息名称标识 <span class="en">Original Message Name Identification (OrgnlMsgNmId)</span>
+    <span class="required text-danger">*</span>
+    <span class="mult-tag">[1..1]</span>
+  </label>
+  <input type="text" class="form-control" id="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_OrgnlGrpInf_OrgnlMsgNmId" name="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_OrgnlGrpInf_OrgnlMsgNmId" data-prefix="DOC" data-tag="OrgnlMsgNmId" data-iso-path="Document.RsltnOfInvstgtn.CxlDtls.TxInfAndSts.OrgnlGrpInf.OrgnlMsgNmId" data-form-name="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_OrgnlGrpInf_OrgnlMsgNmId" data-type-code="text" maxlength="35">
+  <div class="hint">最大长度 / Max: 35</div>
+  <div class="error-msg"></div>
+</div>
+</div>
+<div class="field-grid">
+<div class="field-group field-editable" data-iso-path="Document.RsltnOfInvstgtn.CxlDtls.TxInfAndSts.OrgnlGrpInf.OrgnlCreDtTm" data-form-name="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_OrgnlGrpInf_OrgnlCreDtTm" data-required="false">
+  <label class="control-label" for="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_OrgnlGrpInf_OrgnlCreDtTm">
+    原始创建日期时间 <span class="en">Original Creation Date Time (OrgnlCreDtTm)</span>
+    
+    <span class="mult-tag">[0..1]</span>
+  </label>
+  <input type="text" class="form-control" id="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_OrgnlGrpInf_OrgnlCreDtTm" name="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_OrgnlGrpInf_OrgnlCreDtTm" data-prefix="DOC" data-tag="OrgnlCreDtTm" data-iso-path="Document.RsltnOfInvstgtn.CxlDtls.TxInfAndSts.OrgnlGrpInf.OrgnlCreDtTm" data-form-name="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_OrgnlGrpInf_OrgnlCreDtTm" data-type-code="dateTime" placeholder="YYYY-MM-DDThh:mm:ss">
+  
+  <div class="error-msg"></div>
+</div>
+</div>
+  </div>
+</div>
+<div class="field-grid">
+<div class="field-group field-editable" data-iso-path="Document.RsltnOfInvstgtn.CxlDtls.TxInfAndSts.OrgnlInstrId" data-form-name="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_OrgnlInstrId" data-required="false">
+  <label class="control-label" for="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_OrgnlInstrId">
+    原始指令标识 <span class="en">Original Instruction Identification (OrgnlInstrId)</span>
+    
+    <span class="mult-tag">[0..1]</span>
+  </label>
+  <input type="text" class="form-control" id="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_OrgnlInstrId" name="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_OrgnlInstrId" data-prefix="DOC" data-tag="OrgnlInstrId" data-iso-path="Document.RsltnOfInvstgtn.CxlDtls.TxInfAndSts.OrgnlInstrId" data-form-name="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_OrgnlInstrId" data-type-code="text" maxlength="35">
+  <div class="hint">最大长度 / Max: 35</div>
+  <div class="error-msg"></div>
+</div>
+<div class="field-group field-editable" data-iso-path="Document.RsltnOfInvstgtn.CxlDtls.TxInfAndSts.OrgnlEndToEndId" data-form-name="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_OrgnlEndToEndId" data-required="false">
+  <label class="control-label" for="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_OrgnlEndToEndId">
+    原始端到端标识 <span class="en">Original End To End Identification (OrgnlEndToEndId)</span>
+    
+    <span class="mult-tag">[0..1]</span>
+  </label>
+  <input type="text" class="form-control" id="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_OrgnlEndToEndId" name="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_OrgnlEndToEndId" data-prefix="DOC" data-tag="OrgnlEndToEndId" data-iso-path="Document.RsltnOfInvstgtn.CxlDtls.TxInfAndSts.OrgnlEndToEndId" data-form-name="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_OrgnlEndToEndId" data-type-code="text" maxlength="35">
+  <div class="hint">最大长度 / Max: 35</div>
+  <div class="error-msg"></div>
+</div>
+</div>
+<div class="field-grid">
+<div class="field-group field-editable" data-iso-path="Document.RsltnOfInvstgtn.CxlDtls.TxInfAndSts.OrgnlTxId" data-form-name="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_OrgnlTxId" data-required="false">
+  <label class="control-label" for="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_OrgnlTxId">
+    原始交易标识 <span class="en">Original Transaction Identification (OrgnlTxId)</span>
+    
+    <span class="mult-tag">[0..1]</span>
+  </label>
+  <input type="text" class="form-control" id="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_OrgnlTxId" name="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_OrgnlTxId" data-prefix="DOC" data-tag="OrgnlTxId" data-iso-path="Document.RsltnOfInvstgtn.CxlDtls.TxInfAndSts.OrgnlTxId" data-form-name="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_OrgnlTxId" data-type-code="text" maxlength="35">
+  <div class="hint">最大长度 / Max: 35</div>
+  <div class="error-msg"></div>
+</div>
+<div class="field-group field-editable" data-iso-path="Document.RsltnOfInvstgtn.CxlDtls.TxInfAndSts.OrgnlClrSysRef" data-form-name="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_OrgnlClrSysRef" data-required="false">
+  <label class="control-label" for="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_OrgnlClrSysRef">
+    原始清算系统参考 <span class="en">Original Clearing System Reference (OrgnlClrSysRef)</span>
+    
+    <span class="mult-tag">[0..1]</span>
+  </label>
+  <input type="text" class="form-control" id="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_OrgnlClrSysRef" name="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_OrgnlClrSysRef" data-prefix="DOC" data-tag="OrgnlClrSysRef" data-iso-path="Document.RsltnOfInvstgtn.CxlDtls.TxInfAndSts.OrgnlClrSysRef" data-form-name="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_OrgnlClrSysRef" data-type-code="text" maxlength="35">
+  <div class="hint">最大长度 / Max: 35</div>
+  <div class="error-msg"></div>
+</div>
+</div>
+<div class="field-grid">
+<div class="field-group field-required" data-iso-path="Document.RsltnOfInvstgtn.CxlDtls.TxInfAndSts.OrgnlUETR" data-form-name="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_OrgnlUETR" data-required="true">
+  <label class="control-label" for="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_OrgnlUETR">
+    原始唯一端到端交易引用 <span class="en">Original UETR (OrgnlUETR)</span>
+    <span class="required text-danger">*</span>
+    <span class="mult-tag">[1..1]</span>
+  </label>
+  <input type="text" class="form-control" id="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_OrgnlUETR" name="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_OrgnlUETR" data-prefix="DOC" data-tag="OrgnlUETR" data-iso-path="Document.RsltnOfInvstgtn.CxlDtls.TxInfAndSts.OrgnlUETR" data-form-name="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_OrgnlUETR" data-type-code="text">
+  
+  <div class="error-msg"></div>
+</div>
+</div>
+<div class="panel panel-default">
+  <div class="panel-heading collapsed" data-toggle="collapse" data-target="#collapse_DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_CxlStsRsnInf">
+    <h4 class="panel-title">
+      撤销状态原因信息 / Cancellation Status Reason Information <span class="label label-info">可选 / Optional</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_CxlStsRsnInf" class="panel-body collapse ">
+    <div class="panel panel-default">
+  <div class="panel-heading collapsed" data-toggle="collapse" data-target="#collapse_DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_CxlStsRsnInf_Orgtr">
+    <h4 class="panel-title">
+      发起人 / Originator <span class="label label-info">可选 / Optional</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_CxlStsRsnInf_Orgtr" class="panel-body collapse"
+       data-component="PartyIdentification"
+       data-path-prefix="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_CxlStsRsnInf_Orgtr"
+       data-rendered="false">
+    <div class="component-placeholder text-muted">展开加载 / Expand to load</div>
+  </div>
+</div>
+<div class="panel panel-default">
+  <div class="panel-heading collapsed" data-toggle="collapse" data-target="#collapse_DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_CxlStsRsnInf_Rsn">
+    <h4 class="panel-title">
+      原因 / Reason <span class="label label-info">可选 / Optional</span>
+      <span class="toggle-icon">&#9660;</span>
+    </h4>
+  </div>
+  <div id="collapse_DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_CxlStsRsnInf_Rsn" class="panel-body collapse ">
+    <div class="field-grid">
+<div class="field-group field-required" data-iso-path="Document.RsltnOfInvstgtn.CxlDtls.TxInfAndSts.CxlStsRsnInf.Rsn.Cd" data-form-name="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_CxlStsRsnInf_Rsn_Cd" data-required="true">
+  <label class="control-label" for="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_CxlStsRsnInf_Rsn_Cd">
+    代码 <span class="en">Code (Cd)</span>
+    <span class="required text-danger">*</span>
+    <span class="mult-tag">[1..1]</span>
+  </label>
+  <select class="form-control" id="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_CxlStsRsnInf_Rsn_Cd" name="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_CxlStsRsnInf_Rsn_Cd" data-prefix="DOC" data-tag="Cd" data-iso-path="Document.RsltnOfInvstgtn.CxlDtls.TxInfAndSts.CxlStsRsnInf.Rsn.Cd" data-form-name="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_CxlStsRsnInf_Rsn_Cd" data-type-code="text">
+    <option value="">-- 请选择 / Please select --</option>
+    <option value="NOOR">NOOR - NOOR / NOOR</option>
+    <option value="NOAS">NOAS - NOAS / NOAS</option>
+    <option value="ARDT">ARDT - ARDT / ARDT</option>
+    <option value="CUST">CUST - CUST / CUST</option>
+    <option value="AGNT">AGNT - AGNT / AGNT</option>
+    <option value="LEGL">LEGL - LEGL / LEGL</option>
+    <option value="AC04">AC04 - AC04 / AC04</option>
+    <option value="AM04">AM04 - AM04 / AM04</option>
+    <option value="PTNA">PTNA - PTNA / PTNA</option>
+    <option value="RQDA">RQDA - RQDA / RQDA</option>
+    <option value="INDM">INDM - INDM / INDM</option>
+</select>
+  <div class="hint">最大长度 / Max: 4</div>
+  <div class="error-msg"></div>
+</div>
+</div>
+  </div>
+</div>
+<div class="repeat-group repeat-leaf panel panel-default" id="repeat_DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_CxlStsRsnInf_AddtlInf" data-repeat-group="repeat_DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_CxlStsRsnInf_AddtlInf" data-min="0" data-max="2">
+  <div class="panel-heading">
+    <h4 class="panel-title" style="display:inline">附加信息 / Additional Information</h4>
+    <span class="label label-default">[0..2]</span>
+    <button type="button" class="btn btn-xs btn-primary btn-repeat-add pull-right">+ 添加</button>
+  </div>
+  <div class="panel-body repeat-items" id="repeat_DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_CxlStsRsnInf_AddtlInf_items">
+    <div class="repeat-item repeat-template" data-index="1" style="display:none">
+      <span class="repeat-index">第1条</span>
+      <button type="button" class="btn btn-xs btn-danger btn-repeat-remove">×</button>
+      <div class="field-group field-editable" data-iso-path="Document.RsltnOfInvstgtn.CxlDtls.TxInfAndSts.CxlStsRsnInf.AddtlInf" data-form-name="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_CxlStsRsnInf_AddtlInf" data-required="false">
+        <input type="text" class="form-control" id="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_CxlStsRsnInf_AddtlInf" name="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_CxlStsRsnInf_AddtlInf" data-prefix="DOC" data-tag="AddtlInf" data-iso-path="Document.RsltnOfInvstgtn.CxlDtls.TxInfAndSts.CxlStsRsnInf.AddtlInf" data-form-name="DOC_RsltnOfInvstgtn_CxlDtls_TxInfAndSts_CxlStsRsnInf_AddtlInf" data-type-code="text" maxlength="105">
+        <div class="hint">最大长度 / Max: 105</div>
+        <div class="error-msg"></div>
+      </div>
+    </div>
+  </div>
+</div>
+  </div>
+</div>
+  </div>
+</div>
+  </div>
+</div>
+  </div>
+</div>
+  </div>
+</div>
+    </div>
+
+
+    <!-- JSON Panel -->
+    <div class="json-panel">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <div class="json-tabs btn-group btn-group-xs">
+            <button type="button" class="btn btn-default active" id="tabSummary">摘要</button>
+            <button type="button" class="btn btn-default" id="tabJson">JSON</button>
+          </div>
+          <div class="pull-right">
+            <button type="button" class="btn btn-default btn-xs" id="btnImport">导入</button>
+            <button type="button" class="btn btn-default btn-xs" id="btnCopyJson">复制</button>
+            <button type="button" class="btn btn-default btn-xs" id="btnPrint">打印</button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div id="summaryView" class="summary-view">
+            <div class="summary-item"><span class="summary-label">报文类型</span><span class="summary-value" id="sumMsgType">camt.029.001.09</span></div>
+            <div class="summary-item"><span class="summary-label">付款人</span><span class="summary-value" id="sumDebtor">—</span></div>
+            <div class="summary-item"><span class="summary-label">付款行</span><span class="summary-value" id="sumDebtorAgent">—</span></div>
+            <div class="summary-item"><span class="summary-label">收款人</span><span class="summary-value" id="sumCreditor">—</span></div>
+            <div class="summary-item"><span class="summary-label">收款行</span><span class="summary-value" id="sumCreditorAgent">—</span></div>
+            <div class="summary-item"><span class="summary-label">结算金额</span><span class="summary-value" id="sumAmount">—</span></div>
+            <div class="summary-item"><span class="summary-label">费用承担</span><span class="summary-value" id="sumChrgBr">—</span></div>
+            <div class="summary-item"><span class="summary-label">汇款附言</span><span class="summary-value" id="sumRmtInf">—</span></div>
+            <div class="summary-item"><span class="summary-label">端到端ID</span><span class="summary-value" id="sumE2E">—</span></div>
+          </div>
+          <textarea id="jsonPreview" style="display:none" readonly="readonly"></textarea>
+        </div>
+        <div class="validation-summary" id="validationSummary"></div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Toast -->
+  <div class="toast-msg" id="toast"></div>
+
+  <!-- Quick Fill Panel -->
+  <button type="button" class="quick-panel-toggle" id="quickPanelToggle" title="业务快捷字段">&#9889;</button>
+  <div class="quick-panel" id="quickPanel">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <span>业务快捷字段 / Business Quick Fields</span>
+        <button type="button" class="btn btn-xs btn-default pull-right" id="quickPanelClose">&#215;</button>
+      </div>
+      <div class="panel-body">
+        <div id="quickFillFields"></div>
+        <div style="margin-top:10px;text-align:right">
+          <button type="button" class="btn btn-default btn-sm" id="btnQuickClear">清空</button>
+          <button type="button" class="btn btn-primary btn-sm" id="btnQuickSync">同步到表单</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm Modal -->
+  <div class="modal fade" id="confirmModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-content">
+        <div class="modal-header"><h4 class="modal-title" id="confirmTitle"></h4></div>
+        <div class="modal-body"><p id="confirmBody"></p></div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+          <button type="button" class="btn btn-primary" id="confirmOk">确定</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Import Modal -->
+  <div class="modal fade" id="importModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header"><h4 class="modal-title">导入 JSON</h4></div>
+        <div class="modal-body">
+          <p>粘贴之前导出的 JSON 数据，将自动填充表单。</p>
+          <textarea id="importJsonText" class="form-control" rows="12"></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+          <button type="button" class="btn btn-primary" id="btnDoImport">导入</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Inline Data -->
+<script>
+window.AT_LEAST_ONE_GROUPS = [];
+</script>
+<script>
+window.CHOICE_GROUPS = [{"component_name": "", "options": [{"tag": "OrgId", "name": "OrganisationIdentification", "mult": "[1..1]"}, {"tag": "FIId", "name": "FinancialInstitutionIdentification", "mult": "[1..1]"}], "used_in": []}, {"component_name": "", "options": [{"tag": "Conf", "name": "Confirmation", "mult": "[1..1]"}, {"tag": "RjctdMod", "name": "RejectedModification", "mult": "[1..*]"}, {"tag": "DplctOf", "name": "DuplicateOf", "mult": "[1..1]"}, {"tag": "AssgnmtCxlConf", "name": "AssignmentCancellationConfirmation", "mult": "[1..1]"}], "used_in": []}, {"component_name": "", "options": [{"tag": "Accptd", "name": "Accepted", "mult": "[1..1]"}, {"tag": "Rjctd", "name": "Rejected", "mult": "[1..1]"}], "used_in": []}, {"component_name": "", "options": [{"tag": "Initn", "name": "Initiation", "mult": "[1..1]"}, {"tag": "IntrBk", "name": "Interbank", "mult": "[1..1]"}], "used_in": []}, {"component_name": "CharacterSet", "options": [{"tag": "OrgId", "name": "OrganisationIdentification", "mult": "[1..1]"}, {"tag": "FIId", "name": "FinancialInstitutionIdentification", "mult": "[1..1]"}], "used_in": []}, {"component_name": "MessageDefinitionIdentifier", "options": [{"tag": "OrgId", "name": "OrganisationIdentification", "mult": "[1..1]"}, {"tag": "FIId", "name": "FinancialInstitutionIdentification", "mult": "[1..1]"}], "used_in": []}, {"component_name": "ModificationDetails", "options": [{"tag": "Conf", "name": "Confirmation", "mult": "[1..1]"}, {"tag": "RjctdMod", "name": "RejectedModification", "mult": "[1..*]"}, {"tag": "DplctOf", "name": "DuplicateOf", "mult": "[1..1]"}, {"tag": "AssgnmtCxlConf", "name": "AssignmentCancellationConfir-\nmation", "mult": "[1..1]"}], "used_in": []}, {"component_name": "CorrectionTransaction", "options": [{"tag": "Accptd", "name": "Accepted", "mult": "[1..1]"}, {"tag": "Rjctd", "name": "Rejected", "mult": "[1..1]"}], "used_in": []}, {"component_name": "SupplementaryData", "options": [{"tag": "Initn", "name": "Initiation", "mult": "[1..1]"}, {"tag": "IntrBk", "name": "Interbank", "mult": "[1..1]"}], "used_in": []}, {"component_name": "AccountIdentification4Choice", "options": [{"tag": "IBAN", "name": "IBAN", "mult": "[1..1]"}, {"tag": "Othr", "name": "Other", "mult": "[1..1]"}], "used_in": ["Identification on page 55"]}, {"component_name": "AddressType3Choice", "options": [{"tag": "Cd", "name": "Code", "mult": "[1..1]"}, {"tag": "Prtry", "name": "Proprietary", "mult": "[1..1]"}], "used_in": ["SchemeName on page 115"]}, {"component_name": "OriginalReason", "options": [{"tag": "Tp", "name": "Type", "mult": "[1..1]"}, {"tag": "Prd", "name": "Period", "mult": "[1..1]"}, {"tag": "PtInTm", "name": "PointInTime", "mult": "[1..1]"}], "used_in": []}, {"component_name": "EquivalentAmount", "options": [{"tag": "Cd", "name": "Code", "mult": "[1..1]"}, {"tag": "Prtry", "name": "Proprietary", "mult": "[1..1]"}], "used_in": ["Amount on page 150"]}, {"component_name": "EquivalentAmount", "options": [{"tag": "InstdAmt", "name": "InstructedAmount", "mult": "[1..1]"}, {"tag": "EqvtAmt", "name": "EquivalentAmount", "mult": "[1..1]"}], "used_in": ["Amount on page 150"]}, {"component_name": "Proprietary", "options": [{"tag": "Cd", "name": "Code", "mult": "[1..1]"}, {"tag": "Prtry", "name": "Proprietary", "mult": "[1..1]"}], "used_in": ["Reason on page 47"]}, {"component_name": "CancellationStatusReason4__1", "options": [{"tag": "Cd", "name": "Code", "mult": "[1..1]"}, {"tag": "Prtry", "name": "Proprietary", "mult": "[1..1]"}], "used_in": ["CancellationStatusReasonInformation on page 183"]}, {"component_name": "AdditionalInformation", "options": [{"tag": "Cd", "name": "Code", "mult": "[1..1]"}, {"tag": "Prtry", "name": "Proprietary", "mult": "[1..1]"}], "used_in": ["DuplicateOf on page 125", "ResolvedCase on page 20", "ResolvedCase on page 140", "Resolved-\nCase on page 147", "ResolvedCase on page 189", "ResolvedCase on page 193"]}, {"component_name": "ReopenCaseIndication", "options": [{"tag": "Pty", "name": "Party", "mult": "[1..1]"}, {"tag": "Agt", "name": "Agent", "mult": "[1..1]"}], "used_in": ["ResolvedCase on page 180"]}, {"component_name": "CashAccount38", "options": [{"tag": "Pty", "name": "Party", "mult": "[1..1]"}, {"tag": "Agt", "name": "Agent", "mult": "[1..1]"}], "used_in": []}, {"component_name": "Identification", "options": [{"tag": "IBAN", "name": "IBAN", "mult": "[1..1]"}, {"tag": "Othr", "name": "Other", "mult": "[1..1]"}], "used_in": ["CreditorAccount on page 157", "CreditorAgentAccount on page 157", "DebtorAccount on page 155", "DebtorAgentAccount on page 156", "InstructedReimbursementAgentAccount on page 235", "InstructingReimbursementAgentAccount on page 234", "OriginalCreditorAgentAccount on page 30", "OriginalDebtorAccount on page 30", "OriginalDebtorAgentAccount on page 31", "SettlementAccount on page 233", "ThirdReimbursementAgentAccount on page 236"]}, {"component_name": "CategoryPurpose1Choice", "options": [{"tag": "Cd", "name": "Code", "mult": "[1..1]"}, {"tag": "Prtry", "name": "Proprietary", "mult": "[1..1]"}], "used_in": ["Type on page 55"]}, {"component_name": "Tax", "options": [{"tag": "Cd", "name": "Code", "mult": "[1..1]"}, {"tag": "Prtry", "name": "Proprietary", "mult": "[1..1]"}], "used_in": []}, {"component_name": "ClaimNonReceipt2Choice", "options": [{"tag": "Accptd", "name": "Accepted", "mult": "[1..1]"}, {"tag": "Rjctd", "name": "Rejected", "mult": "[1..1]"}], "used_in": ["ClaimNonReceiptDetails on page 22"]}, {"component_name": "ClearingSystemIdentification2Choice", "options": [{"tag": "Cd", "name": "Code", "mult": "[1..1]"}, {"tag": "Prtry", "name": "Proprietary", "mult": "[1..1]"}], "used_in": ["Rejected on page 64"]}, {"component_name": "ClearingSystemIdentification", "options": [{"tag": "Cd", "name": "Code", "mult": "[1..1]"}, {"tag": "Prtry", "name": "Proprietary", "mult": "[1..1]"}], "used_in": ["ClearingSystem on page 233"]}, {"component_name": "MemberIdentification", "options": [{"tag": "Cd", "name": "Code", "mult": "[1..1]"}, {"tag": "Prtry", "name": "Proprietary", "mult": "[1..1]"}], "used_in": []}, {"component_name": "CorrectiveTransaction4Choice", "options": [{"tag": "Dt", "name": "Date", "mult": "[1..1]"}, {"tag": "DtTm", "name": "DateTime", "mult": "[1..1]"}], "used_in": []}, {"component_name": "Interbank", "options": [{"tag": "Initn", "name": "Initiation", "mult": "[1..1]"}, {"tag": "IntrBk", "name": "Interbank", "mult": "[1..1]"}], "used_in": ["CorrectionTransaction on page 23"]}, {"component_name": "CreditorReferenceType2", "options": [{"tag": "Cd", "name": "Code", "mult": "[1..1]"}, {"tag": "Prtry", "name": "Proprietary", "mult": "[1..1]"}], "used_in": ["CodeOrProprietary on page 85"]}, {"component_name": "DateAndDateTime2Choice", "options": [{"tag": "Cd", "name": "Code", "mult": "[1..1]"}, {"tag": "Prtry", "name": "Proprietary", "mult": "[1..1]"}], "used_in": ["Type on page 83"]}, {"component_name": "DateAndDateTime2Choice", "options": [{"tag": "Dt", "name": "Date", "mult": "[1..1]"}, {"tag": "DtTm", "name": "DateTime", "mult": "[1..1]"}], "used_in": ["Type on page 83"]}, {"component_name": "DiscountAmountType1Choice", "options": [{"tag": "Cd", "name": "Code", "mult": "[1..1]"}, {"tag": "Prtry", "name": "Proprietary", "mult": "[1..1]"}], "used_in": ["DiscountAppliedAmount on page 223", "DiscountAppliedAmount on page 225"]}, {"component_name": "DocumentAdjustment1", "options": [{"tag": "Cd", "name": "Code", "mult": "[1..1]"}, {"tag": "Prtry", "name": "Proprietary", "mult": "[1..1]"}], "used_in": ["Type on page 91"]}, {"component_name": "DocumentLineType1Choice", "options": [{"tag": "Cd", "name": "Code", "mult": "[1..1]"}, {"tag": "Prtry", "name": "Proprietary", "mult": "[1..1]"}], "used_in": ["Type on page 93"]}, {"component_name": "FinancialInstitutionIdentification18", "options": [{"tag": "Cd", "name": "Code", "mult": "[1..1]"}, {"tag": "Prtry", "name": "Proprietary", "mult": "[1..1]"}], "used_in": ["SchemeName on page 116"]}, {"component_name": "PointInTime", "options": [{"tag": "Tp", "name": "Type", "mult": "[1..1]"}, {"tag": "Prd", "name": "Period", "mult": "[1..1]"}, {"tag": "PtInTm", "name": "PointInTime", "mult": "[1..1]"}], "used_in": ["Frequency on page 129", "OriginalFrequency on page 32"]}, {"component_name": "GarnishmentType1Choice", "options": [{"tag": "Cd", "name": "Code", "mult": "[1..1]"}, {"tag": "Prtry", "name": "Proprietary", "mult": "[1..1]"}], "used_in": ["Type on page 111"]}, {"component_name": "GenericAccountIdentification1", "options": [{"tag": "Cd", "name": "Code", "mult": "[1..1]"}, {"tag": "Prtry", "name": "Proprietary", "mult": "[1..1]"}], "used_in": ["CodeOrProprietary on page 113"]}, {"component_name": "GenericFinancialIdentification1", "options": [{"tag": "Cd", "name": "Code", "mult": "[1..1]"}, {"tag": "Prtry", "name": "Proprietary", "mult": "[1..1]"}], "used_in": ["Other on page 26"]}, {"component_name": "GenericIdentification3", "options": [{"tag": "Cd", "name": "Code", "mult": "[1..1]"}, {"tag": "Prtry", "name": "Proprietary", "mult": "[1..1]"}], "used_in": ["Other on page 100", "Other on page 104", "Other on page 107"]}, {"component_name": "GenericPersonIdentification1", "options": [{"tag": "Cd", "name": "Code", "mult": "[1..1]"}, {"tag": "Prtry", "name": "Proprietary", "mult": "[1..1]"}], "used_in": []}, {"component_name": "GenericPersonIdentification1__1", "options": [{"tag": "Cd", "name": "Code", "mult": "[1..1]"}, {"tag": "Prtry", "name": "Proprietary", "mult": "[1..1]"}], "used_in": ["Other on page 201"]}, {"component_name": "Identification", "options": [{"tag": "Cd", "name": "Code", "mult": "[1..1]"}, {"tag": "Prtry", "name": "Proprietary", "mult": "[1..1]"}], "used_in": ["Other on page 202", "Other on page 203"]}, {"component_name": "Confirmation", "options": [{"tag": "Conf", "name": "Confirmation", "mult": "[1..1]"}, {"tag": "RjctdMod", "name": "RejectedModification", "mult": "[1..*]"}, {"tag": "DplctOf", "name": "DuplicateOf", "mult": "[1..1]"}, {"tag": "AssgnmtCxlConf", "name": "AssignmentCancellationConfir-\nmation", "mult": "[1..1]"}], "used_in": ["Status on page 20"]}, {"component_name": "AssignmentCancellationConfirmation", "options": [{"tag": "Cd", "name": "Code", "mult": "[1..1]"}, {"tag": "Prtry", "name": "Proprietary", "mult": "[1..1]"}], "used_in": []}, {"component_name": "MandateRelatedInformation14", "options": [{"tag": "Cd", "name": "Code", "mult": "[1..1]"}, {"tag": "Prtry", "name": "Proprietary", "mult": "[1..1]"}], "used_in": ["LocalInstrument on page 199"]}, {"component_name": "FinalCollectionDate", "options": [{"tag": "Tp", "name": "Type", "mult": "[1..1]"}, {"tag": "Prd", "name": "Period", "mult": "[1..1]"}, {"tag": "PtInTm", "name": "PointInTime", "mult": "[1..1]"}], "used_in": []}, {"component_name": "ModificationStatusReason2", "options": [{"tag": "Cd", "name": "Code", "mult": "[1..1]"}, {"tag": "Prtry", "name": "Proprietary", "mult": "[1..1]"}], "used_in": ["Reason on page 132", "RejectedModification on page 125"]}, {"component_name": "NumberOfCancellationsPerStatus1", "options": [{"tag": "Cd", "name": "Code", "mult": "[1..1]"}, {"tag": "Prtry", "name": "Proprietary", "mult": "[1..1]"}], "used_in": []}, {"component_name": "RequestedExecutionDate", "options": [{"tag": "InstdAmt", "name": "InstructedAmount", "mult": "[1..1]"}, {"tag": "EqvtAmt", "name": "EquivalentAmount", "mult": "[1..1]"}], "used_in": []}, {"component_name": "DebtorAgent", "options": [{"tag": "Pty", "name": "Party", "mult": "[1..1]"}, {"tag": "Agt", "name": "Agent", "mult": "[1..1]"}], "used_in": []}, {"component_name": "CreditorAccount", "options": [{"tag": "Pty", "name": "Party", "mult": "[1..1]"}, {"tag": "Agt", "name": "Agent", "mult": "[1..1]"}], "used_in": []}, {"component_name": "UltimateCreditor", "options": [{"tag": "Pty", "name": "Party", "mult": "[1..1]"}, {"tag": "Agt", "name": "Agent", "mult": "[1..1]"}], "used_in": []}, {"component_name": "UltimateCreditor", "options": [{"tag": "Cd", "name": "Code", "mult": "[1..1]"}, {"tag": "Prtry", "name": "Proprietary", "mult": "[1..1]"}], "used_in": []}, {"component_name": "OrganisationIdentification", "options": [{"tag": "OrgId", "name": "OrganisationIdentification", "mult": "[1..1]"}, {"tag": "PrvtId", "name": "PrivateIdentification", "mult": "[1..1]"}], "used_in": ["Other on page 75"]}, {"component_name": "Party38Choice__2", "options": [{"tag": "OrgId", "name": "OrganisationIdentification", "mult": "[1..1]"}, {"tag": "PrvtId", "name": "PrivateIdentification", "mult": "[1..1]"}], "used_in": ["Identification on page 174"]}, {"component_name": "Party40Choice", "options": [{"tag": "OrgId", "name": "OrganisationIdentification", "mult": "[1..1]"}, {"tag": "PrvtId", "name": "PrivateIdentification", "mult": "[1..1]"}], "used_in": ["Identification on page 177"]}, {"component_name": "Agent", "options": [{"tag": "Pty", "name": "Party", "mult": "[1..1]"}, {"tag": "Agt", "name": "Agent", "mult": "[1..1]"}], "used_in": ["Assignee on page 196", "Assignee on page 186", "Assigner on page 196", "Assigner on page 186", "Creator on page 51", "Creditor on page 157", "Debtor on page 155", "UltimateCred-\nitor on page 158", "UltimateDebtor on page 154"]}, {"component_name": "Party40Choice__1", "options": [{"tag": "Pty", "name": "Party", "mult": "[1..1]"}, {"tag": "Agt", "name": "Agent", "mult": "[1..1]"}], "used_in": ["Assignee on page 54", "Assigner on page 53"]}, {"component_name": "Party40Choice__2", "options": [{"tag": "Pty", "name": "Party", "mult": "[1..1]"}, {"tag": "Agt", "name": "Agent", "mult": "[1..1]"}], "used_in": ["Creator on page 52"]}, {"component_name": "Party44Choice__1", "options": [{"tag": "OrgId", "name": "OrganisationIdentification", "mult": "[1..1]"}, {"tag": "FIId", "name": "FinancialInstitutionIdentification", "mult": "[1..1]"}], "used_in": []}, {"component_name": "ContactDetails", "options": [{"tag": "OrgId", "name": "OrganisationIdentification", "mult": "[1..1]"}, {"tag": "PrvtId", "name": "PrivateIdentification", "mult": "[1..1]"}], "used_in": []}, {"component_name": "Assignee", "options": [{"tag": "Pty", "name": "Party", "mult": "[1..1]"}, {"tag": "Agt", "name": "Agent", "mult": "[1..1]"}], "used_in": []}, {"component_name": "OriginalTransactionReference", "options": [{"tag": "Dt", "name": "Date", "mult": "[1..1]"}, {"tag": "DtTm", "name": "DateTime", "mult": "[1..1]"}], "used_in": []}, {"component_name": "OriginalInterbankSettlementDate", "options": [{"tag": "Pty", "name": "Party", "mult": "[1..1]"}, {"tag": "Agt", "name": "Agent", "mult": "[1..1]"}], "used_in": []}, {"component_name": "OriginalTransactionReference", "options": [{"tag": "Pty", "name": "Party", "mult": "[1..1]"}, {"tag": "Agt", "name": "Agent", "mult": "[1..1]"}], "used_in": []}, {"component_name": "CategoryPurpose", "options": [{"tag": "Cd", "name": "Code", "mult": "[1..1]"}, {"tag": "Prtry", "name": "Proprietary", "mult": "[1..1]"}], "used_in": []}, {"component_name": "DateAndPlaceOfBirth", "options": [{"tag": "Cd", "name": "Code", "mult": "[1..1]"}, {"tag": "Prtry", "name": "Proprietary", "mult": "[1..1]"}], "used_in": ["PrivateIdentification on page 160"]}, {"component_name": "PersonIdentificationSchemeName1Choice__1", "options": [{"tag": "Cd", "name": "Code", "mult": "[1..1]"}, {"tag": "Prtry", "name": "Proprietary", "mult": "[1..1]"}], "used_in": ["SchemeName on page 121"]}, {"component_name": "SubDepartment", "options": [{"tag": "Cd", "name": "Code", "mult": "[1..1]"}, {"tag": "Prtry", "name": "Proprietary", "mult": "[1..1]"}], "used_in": ["PostalAddress on page 39", "PostalAddress on page 100", "PostalAddress on page 169", "PostalAddress on page 103"]}, {"component_name": "ProxyAccountType1Choice", "options": [{"tag": "Cd", "name": "Code", "mult": "[1..1]"}, {"tag": "Prtry", "name": "Proprietary", "mult": "[1..1]"}], "used_in": ["Proxy on page 56"]}, {"component_name": "ReferredDocumentInformation7", "options": [{"tag": "Cd", "name": "Code", "mult": "[1..1]"}, {"tag": "Prtry", "name": "Proprietary", "mult": "[1..1]"}], "used_in": ["Purpose on page 158", "Purpose on page 238"]}, {"component_name": "ReferredDocumentType4", "options": [{"tag": "Cd", "name": "Code", "mult": "[1..1]"}, {"tag": "Prtry", "name": "Proprietary", "mult": "[1..1]"}], "used_in": ["CodeOrProprietary on page 222"]}, {"component_name": "RemittanceAmount2", "options": [{"tag": "Cd", "name": "Code", "mult": "[1..1]"}, {"tag": "Prtry", "name": "Proprietary", "mult": "[1..1]"}], "used_in": ["Type on page 220"]}, {"component_name": "SettlementInstruction7", "options": [{"tag": "Cd", "name": "Code", "mult": "[1..1]"}, {"tag": "Prtry", "name": "Proprietary", "mult": "[1..1]"}], "used_in": ["ServiceLevel on page 199"]}, {"component_name": "ClearingSystem", "options": [{"tag": "Cd", "name": "Code", "mult": "[1..1]"}, {"tag": "Prtry", "name": "Proprietary", "mult": "[1..1]"}], "used_in": ["SettlementInformation on page 152"]}, {"component_name": "StructuredRemittanceInformation16", "options": [{"tag": "Cd", "name": "Code", "mult": "[1..1]"}, {"tag": "Prtry", "name": "Proprietary", "mult": "[1..1]"}], "used_in": []}, {"component_name": "TaxAmountType1Choice", "options": [{"tag": "Cd", "name": "Code", "mult": "[1..1]"}, {"tag": "Prtry", "name": "Proprietary", "mult": "[1..1]"}], "used_in": ["TaxAmount on page 223", "TaxAmount on page 225"]}];
+</script>
+
+  <!-- Scripts -->
+  <script src="js/vendor/jquery-1.12.4.min.js"></script>
+  <script src="js/vendor/bootstrap.min.js"></script>
+  <script src="js/camt_029_001_09_fieldMeta.js"></script>
+  <script src="js/camt_029_001_09_appConfig.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

@@ -5,10 +5,10 @@ This file provides guidance to Claude Code when working with code in this reposi
 ## Build & Run
 
 ```bash
-# 标准流程：解析 PDF → 翻译 → 生成表单
+# 标准流程：解析 PDF → AI 翻译 JSON → 生成表单
 python scripts/generate_form.py dev/input/pacs.008/structure.pdf \
   --rules-pdf dev/input/pacs.008/rules.pdf
-python scripts/translate_schema.py output/pacs.008.001.08.json
+# AI 读取 output/pacs.008.001.08.json，补全所有空的 name_zh 字段，写回
 python scripts/generate_form.py --schema output/pacs.008.001.08.json
 
 # 快速生成（跳过翻译，英文字段名）
@@ -41,7 +41,6 @@ rules.pdf → parse_rules_pdf.py ↗      ↑
 | `parse_pdf.py` | 解析 CompactPDF 提取字段树 (Level/Type/Mult) |
 | `parse_rules_pdf.py` | 解析 PlainPDF 提取规则 (Or互斥/移除/必填) |
 | `generate_form.py` | CLI 入口，支持 `--schema` 和 `--rules-pdf` |
-| `translate_schema.py` | AI 翻译步骤示例（补全 name_zh） |
 | `form_page.py` | 页面组装、fieldMeta/appConfig 生成 |
 | `field_renderer.py` | 字段/面板 HTML 渲染（含组件懒渲染占位） |
 | `form_app.py` | app.js 生成（ES5, 15个模块含 Component Renderer） |

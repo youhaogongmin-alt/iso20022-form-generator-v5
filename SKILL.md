@@ -13,7 +13,7 @@ description: Generate IE8-compatible interactive HTML forms from ISO 20022 CBPR+
 # 完整流程（解析 + 翻译 + 生成）
 python scripts/generate_form.py dev/input/pacs.008/structure.pdf \
   --rules-pdf dev/input/pacs.008/rules.pdf
-python scripts/translate_schema.py output/pacs.008.001.08.json
+# AI 读取 output/pacs.008.001.08.json，补全 name_zh，写回
 python scripts/generate_form.py --schema output/pacs.008.001.08.json
 ```
 
@@ -62,7 +62,12 @@ dev/input/
    python scripts/generate_form.py dev/input/<msg>/structure.pdf \
      --rules-pdf dev/input/<msg>/rules.pdf
    ```
-4. 读取 `output/<message_id>.json`，补全所有空的 `name_zh` 字段（基于 ISO 20022 / SWIFT / CIPS 标准术语），写回 JSON
+4. **翻译 name_zh**（AI 直接操作 JSON，不需要脚本）:
+   - 读取 `output/<message_id>.json`
+   - 遍历 `app_hdr_fields` 和 `document_fields` 树中所有节点
+   - 对每个 `name_zh` 为空的字段，根据 `name_en` 填入准确的中文翻译
+   - 翻译依据: ISO 20022 标准术语、SWIFT 中文文档、CIPS 系统术语
+   - 写回同一个 JSON 文件
 5. 从已翻译的 schema 生成表单:
    ```bash
    python scripts/generate_form.py --schema output/<message_id>.json
@@ -121,7 +126,6 @@ rules.pdf → parse_rules_pdf.py ↗                                        ↓
 | `parse_pdf.py` | 解析 CompactPDF 提取字段树 (Level/Type/Mult) |
 | `parse_rules_pdf.py` | 解析 PlainPDF 提取规则 (Or互斥/移除/必填/choice_groups) |
 | `generate_form.py` | CLI 入口，支持 `--schema` 和 `--rules-pdf` |
-| `translate_schema.py` | AI 翻译步骤示例（补全 name_zh） |
 | `form_page.py` | 页面组装、fieldMeta/appConfig 生成 |
 | `field_renderer.py` | 字段/面板 HTML 渲染（含组件懒渲染占位） |
 | `form_app.py` | app.js 生成（ES5, 15个模块含 Component Renderer） |
