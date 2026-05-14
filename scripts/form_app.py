@@ -1404,16 +1404,24 @@ function updateSearchNavState() {
 var repeatTemplates = {};
 
 function getDirectRepeatItems($group) {
-  return $group.children(".repeat-items").children(".repeat-item");
+  return $group.children(".repeat-items").children(".repeat-item").not(".repeat-template");
 }
 
 function saveRepeatTemplate($group) {
   var groupId = $group.attr("data-repeat-group");
   if (!repeatTemplates[groupId]) {
-    var $first = getDirectRepeatItems($group).first();
-    if ($first.length) {
-      repeatTemplates[groupId] = $first.clone();
+    // Look for hidden template item first, then visible first item
+    var $tpl = $group.find(".repeat-template").first();
+    if ($tpl.length) {
+      repeatTemplates[groupId] = $tpl.clone();
+      repeatTemplates[groupId].removeClass("repeat-template").removeAttr("style");
       repeatTemplates[groupId].find("input, select, textarea").val("");
+    } else {
+      var $first = getDirectRepeatItems($group).first();
+      if ($first.length) {
+        repeatTemplates[groupId] = $first.clone();
+        repeatTemplates[groupId].find("input, select, textarea").val("");
+      }
     }
   }
 }
@@ -1888,14 +1896,8 @@ function buildRepeatGroupHtml(f, children, fieldPath, prefix, multMin, multMax, 
   var repeatId = "repeat_" + fieldPath;
   var maxDisp = multMax >= 9999 ? "*" : String(multMax);
   var innerHtml = buildComponentHtml(children, fieldPath, prefix, overrides);
-  var itemsHtml = "";
-  if (multMin > 0) {
-    itemsHtml = '    <div class="repeat-item" data-index="1">\n' +
-      '      <span class="repeat-index">第1条</span>\n' +
-      '      <button type="button" class="btn btn-xs btn-danger btn-repeat-remove">×</button>\n' +
-      '      ' + innerHtml + '\n' +
-      '    </div>\n';
-  }
+  var hideStyle = multMin === 0 ? ' style="display:none"' : "";
+  var tplClass = multMin === 0 ? " repeat-template" : "";
   return '<div class="repeat-group panel panel-default" id="' + repeatId + '" ' +
     'data-repeat-group="' + repeatId + '" data-min="' + multMin + '" data-max="' + multMax + '">\n' +
     '  <div class="panel-heading">\n' +
@@ -1904,7 +1906,11 @@ function buildRepeatGroupHtml(f, children, fieldPath, prefix, multMin, multMax, 
     '    <button type="button" class="btn btn-xs btn-primary btn-repeat-add pull-right">+ 添加</button>\n' +
     '  </div>\n' +
     '  <div class="panel-body repeat-items" id="' + repeatId + '_items">\n' +
-    itemsHtml +
+    '    <div class="repeat-item' + tplClass + '" data-index="1"' + hideStyle + '>\n' +
+    '      <span class="repeat-index">第1条</span>\n' +
+    '      <button type="button" class="btn btn-xs btn-danger btn-repeat-remove">×</button>\n' +
+    '      ' + innerHtml + '\n' +
+    '    </div>\n' +
     '  </div>\n' +
     '</div>';
 }
@@ -1968,14 +1974,8 @@ function buildRepeatLeafHtml(f, fieldPath, prefix, multMin, multMax) {
     '        ' + hintHtml + '\n' +
     '        <div class="error-msg"></div>\n' +
     '      </div>';
-  var itemsHtml = "";
-  if (multMin > 0) {
-    itemsHtml = '    <div class="repeat-item" data-index="1">\n' +
-      '      <span class="repeat-index">第1条</span>\n' +
-      '      <button type="button" class="btn btn-xs btn-danger btn-repeat-remove">×</button>\n' +
-      '      ' + itemInner + '\n' +
-      '    </div>\n';
-  }
+  var hideStyle = multMin === 0 ? ' style="display:none"' : "";
+  var tplClass = multMin === 0 ? " repeat-template" : "";
   return '<div class="repeat-group repeat-leaf panel panel-default" id="' + repeatId + '" ' +
     'data-repeat-group="' + repeatId + '" data-min="' + multMin + '" data-max="' + multMax + '">\n' +
     '  <div class="panel-heading">\n' +
@@ -1984,7 +1984,11 @@ function buildRepeatLeafHtml(f, fieldPath, prefix, multMin, multMax) {
     '    <button type="button" class="btn btn-xs btn-primary btn-repeat-add pull-right">+ 添加</button>\n' +
     '  </div>\n' +
     '  <div class="panel-body repeat-items" id="' + repeatId + '_items">\n' +
-    itemsHtml +
+    '    <div class="repeat-item' + tplClass + '" data-index="1"' + hideStyle + '>\n' +
+    '      <span class="repeat-index">第1条</span>\n' +
+    '      <button type="button" class="btn btn-xs btn-danger btn-repeat-remove">×</button>\n' +
+    '      ' + itemInner + '\n' +
+    '    </div>\n' +
     '  </div>\n' +
     '</div>';
 }
