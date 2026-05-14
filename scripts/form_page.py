@@ -134,6 +134,7 @@ def generate_app_config_js(schema: dict) -> str:
     """
     message_id = schema.get("message_id", "Unknown")
     config = {
+        "showTemplateBar": True,
         "messages": {
             message_id: {
                 "templates": TEMPLATES,
@@ -511,21 +512,11 @@ def _html_command_bar() -> str:
 
 
 def _html_progress_template_search() -> str:
-    """Return progress bar, template bar, and search bar."""
+    """Return template bar and search bar."""
     return (
         '\n'
-        '      <!-- Progress Bar -->\n'
-        '      <div class="progress-container">\n'
-        '        <span class="progress-label">\U0001f4ca 必填字段完成度 / Required Fields</span>\n'
-        '        <div class="progress">\n'
-        '          <div class="progress-bar" id="progressFill" role="progressbar"'
-        ' style="width:0%"></div>\n'
-        '        </div>\n'
-        '        <span class="progress-text" id="progressText">0 / 0</span>\n'
-        '      </div>\n'
-        '\n'
         '      <!-- Template Bar -->\n'
-        '      <div class="template-bar">\n'
+        '      <div class="template-bar" id="templateBar">\n'
         '        <span class="label-text">\U0001f4cb 快速模板 / Templates:</span>\n'
         '        <span id="runtimeTemplateList"></span>\n'
         '      </div>\n'

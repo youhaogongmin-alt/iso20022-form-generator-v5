@@ -1745,6 +1745,10 @@ function getRuntimeConfig() {
 }
 
 function applyRuntimeConfig() {
+  var config = window.ISO20022_APP_CONFIG || {};
+  if (config.showTemplateBar === false) {
+    $("#templateBar").hide();
+  }
   renderPresetTemplates();
   renderQuickFillPanel();
   applyFieldStateStyles();

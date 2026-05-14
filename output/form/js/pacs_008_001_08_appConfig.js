@@ -1,4 +1,5 @@
 window.ISO20022_APP_CONFIG = {
+  "showTemplateBar": true,
   "messages": {
     "pacs.008.001.08": {
       "templates": {

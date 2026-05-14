@@ -1,4 +1,5 @@
 window.ISO20022_APP_CONFIG = {
+  "showTemplateBar": true,
   "messages": {
     "camt.029.001.09": {
       "templates": {
