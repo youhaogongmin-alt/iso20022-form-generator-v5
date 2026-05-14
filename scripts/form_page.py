@@ -87,10 +87,8 @@ def generate_html(schema: dict, safe_name: str = "") -> str:
     # --- Assemble page ---
     parts = [
         _html_head(esc_msg_id, esc_name_zh, esc_name_en, esc_collection),
-        _html_command_bar(),
         _html_progress_template_search(),
         _html_form_sections(app_hdr_html, document_html),
-        _html_json_panel(esc_msg_id),
         _html_footer(at_least_one_js + "\n" + choice_groups_js, safe_name),
     ]
     return "\n".join(parts)
@@ -474,13 +472,7 @@ def _html_head(message_id: str, name_zh: str, name_en: str, collection: str) -> 
         '<body class="theme-light">\n'
         '\n'
         '  <div id="page-wrapper">\n'
-        '  <!-- Page Header Bar -->\n'
-        '  <div class="page-header-bar">\n'
-        f'    <h1>{name_zh} / {name_en}</h1>\n'
-        f'    <p class="subtitle">ISO 20022 {collection}</p>\n'
-        f'    <span class="msg-id">{message_id}</span>\n'
-        '    <span class="audit-badge">审核只读模式</span>\n'
-        '  </div>\n'
+        '    <div class="main-panel">\n'
     )
 
 
@@ -573,6 +565,7 @@ def _html_form_sections(app_hdr_html: str, document_html: str) -> str:
         + document_html +
         '\n'
         '    </div>\n'
+        '  </div>\n'
     )
 
 
@@ -639,33 +632,11 @@ def _html_json_panel(message_id: str) -> str:
     )
 
 def _html_footer(at_least_one_js: str, safe_name: str = "") -> str:
-    """Return modals, toast, quick panel, scripts, and closing tags."""
+    """Return toast, confirm modal, and scripts."""
     return (
         '\n'
         '  <!-- Toast -->\n'
         '  <div class="toast-msg" id="toast"></div>\n'
-        '\n'
-        '  <!-- Quick Fill Panel -->\n'
-        '  <button type="button" class="quick-panel-toggle" id="quickPanelToggle"'
-        ' title="业务快捷字段">&#9889;</button>\n'
-        '  <div class="quick-panel" id="quickPanel">\n'
-        '    <div class="panel panel-default">\n'
-        '      <div class="panel-heading">\n'
-        '        <span>业务快捷字段 / Business Quick Fields</span>\n'
-        '        <button type="button" class="btn btn-xs btn-default pull-right"'
-        ' id="quickPanelClose">&#215;</button>\n'
-        '      </div>\n'
-        '      <div class="panel-body">\n'
-        '        <div id="quickFillFields"></div>\n'
-        '        <div style="margin-top:10px;text-align:right">\n'
-        '          <button type="button" class="btn btn-default btn-sm"'
-        ' id="btnQuickClear">清空</button>\n'
-        '          <button type="button" class="btn btn-primary btn-sm"'
-        ' id="btnQuickSync">同步到表单</button>\n'
-        '        </div>\n'
-        '      </div>\n'
-        '    </div>\n'
-        '  </div>\n'
         '\n'
         '  <!-- Confirm Modal -->\n'
         '  <div class="modal fade" id="confirmModal" tabindex="-1">\n'
@@ -679,27 +650,6 @@ def _html_footer(at_least_one_js: str, safe_name: str = "") -> str:
         ' data-dismiss="modal">取消</button>\n'
         '          <button type="button" class="btn btn-primary"'
         ' id="confirmOk">确定</button>\n'
-        '        </div>\n'
-        '      </div>\n'
-        '    </div>\n'
-        '  </div>\n'
-        '\n'
-        '  <!-- Import Modal -->\n'
-        '  <div class="modal fade" id="importModal" tabindex="-1">\n'
-        '    <div class="modal-dialog">\n'
-        '      <div class="modal-content">\n'
-        '        <div class="modal-header">'
-        '<h4 class="modal-title">导入 JSON</h4></div>\n'
-        '        <div class="modal-body">\n'
-        '          <p>粘贴之前导出的 JSON 数据，将自动填充表单。</p>\n'
-        '          <textarea id="importJsonText" class="form-control"'
-        ' rows="12"></textarea>\n'
-        '        </div>\n'
-        '        <div class="modal-footer">\n'
-        '          <button type="button" class="btn btn-default"'
-        ' data-dismiss="modal">取消</button>\n'
-        '          <button type="button" class="btn btn-primary"'
-        ' id="btnDoImport">导入</button>\n'
         '        </div>\n'
         '      </div>\n'
         '    </div>\n'

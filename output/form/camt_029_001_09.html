@@ -19,32 +19,7 @@
 <body class="theme-light">
 
   <div id="page-wrapper">
-  <!-- Page Header Bar -->
-  <div class="page-header-bar">
-    <h1> / </h1>
-    <p class="subtitle">ISO 20022 CBPRPlus SR2026 (Combined)</p>
-    <span class="msg-id">camt.029.001.09</span>
-    <span class="audit-badge">审核只读模式</span>
-  </div>
-
     <div class="main-panel">
-      <!-- Command Bar -->
-      <div class="command-bar">
-        <button type="button" class="btn btn-default btn-sm" id="btnRequiredOnly">👁️ 仅显示必填</button>
-        <button type="button" class="btn btn-default btn-sm" id="btnExportJson">📋 复制JSON</button>
-        <button type="button" class="btn btn-default btn-sm" id="btnExportXml">📄 导出XML</button>
-        <button type="button" class="btn btn-primary btn-sm" id="btnValidate">✅ 校验全部</button>
-        <button type="button" class="btn btn-default btn-sm" id="btnClearDraft">🗑️ 清除草稿</button>
-        <button type="button" class="btn btn-default btn-sm" id="btnAuditMode">🔒 审核模式</button>
-        <button type="button" class="btn btn-default btn-sm" id="btnLangZh">中</button>
-        <button type="button" class="btn btn-default btn-sm" id="btnLangEn">EN</button>
-        <button type="button" class="btn btn-default btn-sm" id="btnLangFr">FR</button>
-        <button type="button" class="btn btn-default btn-sm" id="btnTheme">🌓 主题</button>
-        <span class="autosave-indicator">
-          <span class="autosave-dot" id="autosaveDot"></span>
-          <span id="autosaveText">自动暂存已开启</span>
-        </span>
-      </div>
 
 
       <!-- Progress Bar -->
@@ -1272,62 +1247,11 @@
   </div>
 </div>
     </div>
-
-
-    <!-- JSON Panel -->
-    <div class="json-panel">
-      <div class="panel panel-default">
-        <div class="panel-heading">
-          <div class="json-tabs btn-group btn-group-xs">
-            <button type="button" class="btn btn-default active" id="tabSummary">摘要</button>
-            <button type="button" class="btn btn-default" id="tabJson">JSON</button>
-          </div>
-          <div class="pull-right">
-            <button type="button" class="btn btn-default btn-xs" id="btnImport">导入</button>
-            <button type="button" class="btn btn-default btn-xs" id="btnCopyJson">复制</button>
-            <button type="button" class="btn btn-default btn-xs" id="btnPrint">打印</button>
-          </div>
-        </div>
-        <div class="panel-body">
-          <div id="summaryView" class="summary-view">
-            <div class="summary-item"><span class="summary-label">报文类型</span><span class="summary-value" id="sumMsgType">camt.029.001.09</span></div>
-            <div class="summary-item"><span class="summary-label">付款人</span><span class="summary-value" id="sumDebtor">—</span></div>
-            <div class="summary-item"><span class="summary-label">付款行</span><span class="summary-value" id="sumDebtorAgent">—</span></div>
-            <div class="summary-item"><span class="summary-label">收款人</span><span class="summary-value" id="sumCreditor">—</span></div>
-            <div class="summary-item"><span class="summary-label">收款行</span><span class="summary-value" id="sumCreditorAgent">—</span></div>
-            <div class="summary-item"><span class="summary-label">结算金额</span><span class="summary-value" id="sumAmount">—</span></div>
-            <div class="summary-item"><span class="summary-label">费用承担</span><span class="summary-value" id="sumChrgBr">—</span></div>
-            <div class="summary-item"><span class="summary-label">汇款附言</span><span class="summary-value" id="sumRmtInf">—</span></div>
-            <div class="summary-item"><span class="summary-label">端到端ID</span><span class="summary-value" id="sumE2E">—</span></div>
-          </div>
-          <textarea id="jsonPreview" style="display:none" readonly="readonly"></textarea>
-        </div>
-        <div class="validation-summary" id="validationSummary"></div>
-      </div>
-    </div>
   </div>
 
 
   <!-- Toast -->
   <div class="toast-msg" id="toast"></div>
-
-  <!-- Quick Fill Panel -->
-  <button type="button" class="quick-panel-toggle" id="quickPanelToggle" title="业务快捷字段">&#9889;</button>
-  <div class="quick-panel" id="quickPanel">
-    <div class="panel panel-default">
-      <div class="panel-heading">
-        <span>业务快捷字段 / Business Quick Fields</span>
-        <button type="button" class="btn btn-xs btn-default pull-right" id="quickPanelClose">&#215;</button>
-      </div>
-      <div class="panel-body">
-        <div id="quickFillFields"></div>
-        <div style="margin-top:10px;text-align:right">
-          <button type="button" class="btn btn-default btn-sm" id="btnQuickClear">清空</button>
-          <button type="button" class="btn btn-primary btn-sm" id="btnQuickSync">同步到表单</button>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- Confirm Modal -->
   <div class="modal fade" id="confirmModal" tabindex="-1">
@@ -1338,23 +1262,6 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
           <button type="button" class="btn btn-primary" id="confirmOk">确定</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Import Modal -->
-  <div class="modal fade" id="importModal" tabindex="-1">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header"><h4 class="modal-title">导入 JSON</h4></div>
-        <div class="modal-body">
-          <p>粘贴之前导出的 JSON 数据，将自动填充表单。</p>
-          <textarea id="importJsonText" class="form-control" rows="12"></textarea>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-          <button type="button" class="btn btn-primary" id="btnDoImport">导入</button>
         </div>
       </div>
     </div>

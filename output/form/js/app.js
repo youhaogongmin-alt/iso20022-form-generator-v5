@@ -2316,11 +2316,9 @@ $(document).ready(function() {
   });
 
   // --- Initial UI state ---
-  $(".audit-badge").hide();
   switchLang(currentLang);
   initChoiceGroups();
   updateProgress();
-  updateJSONPreview();
 
   // --- Start auto-save timer (30s) ---
   autoSaveTimer = setInterval(function() {
@@ -2329,20 +2327,6 @@ $(document).ready(function() {
   }, 30000);
 
   // ==================== Event Bindings ====================
-
-  // Command bar buttons
-  $(document).on("click", "#btnRequiredOnly", function() { toggleRequiredOnly(); });
-  $(document).on("click", "#btnExportJson", function() { exportJSON(); });
-  $(document).on("click", "#btnExportXml", function() { exportXML(); });
-  $(document).on("click", "#btnValidate", function() { validateAll(); });
-  $(document).on("click", "#btnClearDraft", function() { clearDraft(); });
-  $(document).on("click", "#btnAuditMode", function() { toggleAuditMode(); });
-  $(document).on("click", "#btnTheme", function() { toggleTheme(); });
-
-  // Language buttons
-  $(document).on("click", "#btnLangZh", function() { switchLang("zh"); });
-  $(document).on("click", "#btnLangEn", function() { switchLang("en"); });
-  $(document).on("click", "#btnLangFr", function() { switchLang("fr"); });
 
   // Template buttons
   $(document).on("click", ".template-btn", function() {
@@ -2399,20 +2383,6 @@ $(document).ready(function() {
       renderComponent(pathPrefix, type, $container);
     }
   });
-
-  // Quick fill panel
-  $(document).on("click", "#quickPanelToggle", function() { toggleRmtInfPanel(); });
-  $(document).on("click", "#quickPanelClose", function() { $("#quickPanel").hide(); });
-  $(document).on("click", "#btnQuickSync", function() { syncRmtInfToForm(); });
-  $(document).on("click", "#btnQuickClear", function() { clearRmtInfPanel(); });
-
-  // JSON panel tabs
-  $(document).on("click", "#tabSummary", function() { switchJsonTab("summary"); });
-  $(document).on("click", "#tabJson", function() { switchJsonTab("json"); });
-  $(document).on("click", "#btnImport", function() { importJSON(); });
-  $(document).on("click", "#btnDoImport", function() { doImportJSON(); });
-  $(document).on("click", "#btnCopyJson", function() { exportJSON(); });
-  $(document).on("click", "#btnPrint", function() { window.print(); });
 
   // Form field changes (delegated)
   $(document).on("input change", ".field-group input, .field-group select, .field-group textarea", function() {
