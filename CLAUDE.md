@@ -5,47 +5,71 @@ This file provides guidance to Claude Code when working with code in this reposi
 ## Build & Run
 
 ```bash
-# Generate form from PDF (multi-file output)
-python scripts/generate_form.py dev/input/CBPRPlus_SR2026.pdf
+# 标准流程：解析 PDF → 翻译 → 生成表单
+python scripts/generate_form.py dev/input/pacs.008/structure.pdf \
+  --rules-pdf dev/input/pacs.008/rules.pdf
+python scripts/translate_schema.py output/pacs.008.001.08.json
+python scripts/generate_form.py --schema output/pacs.008.001.08.json
 
-# Generate form with single-file output
-python scripts/generate_form.py dev/input/CBPRPlus_SR2026.pdf --single-file
+# 快速生成（跳过翻译，英文字段名）
+python scripts/generate_form.py dev/input/pacs.008/structure.pdf \
+  --rules-pdf dev/input/pacs.008/rules.pdf
 ```
 
 No test framework exists. Verify by opening output in a browser and checking key features.
 
+## Input Files
+
+- `dev/input/<msg>/structure.pdf` — CompactPDF (8列, parse_pdf.py 解析字段结构)
+- `dev/input/<msg>/rules.pdf` — PlainPDF (7列, parse_rules_pdf.py 解析互斥/移除规则)
+- 目录名含变体时自动识别: `pacs.008.stp/` → variant=stp
+
 ## Architecture
 
-**Pipeline: PDF → Schema JSON → HTML Form**
+**Pipeline: PDF → Schema JSON → [AI translate] → HTML Form**
 
 ```
-parse_pdf.py → form_page.py (calls field_renderer.py + form_rules.py + form_api.py) → generate_form.py (multi-file + single-file)
+structure.pdf → parse_pdf.py ──→ schema.json → generate_form.py --schema → HTML
+rules.pdf → parse_rules_pdf.py ↗      ↑
+                                  AI fills name_zh
 ```
 
 ### Script Roles
 
 | Script | Role |
 |--------|------|
-| `parse_pdf.py` | Extracts field definitions from ISO 20022 usage guideline PDFs into a schema dict |
-| `form_rules.py` | Centralized CBPR+ presets, business rules, templates, quick-fill fields, field removal lists |
-| `field_renderer.py` | Renders individual fields/panels as HTML (Bootstrap 3 panels, repeat groups, leaf fields) |
-| `form_page.py` | Orchestrates page assembly: calls renderer, builds fieldMeta JS, generates appConfig |
-| `form_app.py` | Generates complete app.js (ES5 + jQuery, 14 modules) |
-| `form_css.py` | Generates app.css (IE8-compatible, dual theme, float-based layout) |
-| `form_api.py` | Provides `window.PACS008_FORM_API` — browser-side API for external integration |
-| `generate_form.py` | CLI entry point — multi-file and single-file output routing |
+| `parse_pdf.py` | 解析 CompactPDF 提取字段树 (Level/Type/Mult) |
+| `parse_rules_pdf.py` | 解析 PlainPDF 提取规则 (Or互斥/移除/必填) |
+| `generate_form.py` | CLI 入口，支持 `--schema` 和 `--rules-pdf` |
+| `translate_schema.py` | AI 翻译步骤示例（补全 name_zh） |
+| `form_page.py` | 页面组装、fieldMeta/appConfig 生成 |
+| `field_renderer.py` | 字段/面板 HTML 渲染（含组件懒渲染占位） |
+| `form_app.py` | app.js 生成（ES5, 15个模块含 Component Renderer） |
+| `form_rules.py` | CBPR+ 规则常量、默认互斥组、组件签名 |
+| `form_css.py` | app.css 生成（IE8 兼容双主题） |
+| `form_api.py` | 浏览器端 Form API |
+
+### Output Structure
+
+```
+output/
+├── pacs.008.001.08.json                    ← schema
+└── form/
+    ├── pacs_008_001_08.html                ← 报文页面
+    ├── js/app.js                           ← 共享逻辑
+    ├── js/<safe_name>_fieldMeta.js         ← 报文字段元数据
+    ├── js/<safe_name>_appConfig.js         ← 报文配置
+    ├── js/vendor/                          ← jQuery, Bootstrap, polyfills
+    └── css/                                ← 共享样式
+```
 
 ### Key Data Structures
 
-- **Schema JSON** (`output/pacs.008.001.08.json`): hierarchical field tree with `message_id`, `app_hdr_fields`, `document_fields`
-- **fieldMeta** (JS array in `fieldMeta.js`): flat list of all fields with form_name, iso_path, type_code, mult_min/max, code_values
-- **AT_LEAST_ONE_GROUPS** (JS array): parent-child groups where parent is mandatory but all children are optional
-- **appConfig.js**: developer-editable runtime config (templates, quick-fill fields, field state overrides)
-
-### Output Modes
-
-- **Multi-file** (always generated): `output/form/` with index.html + js/ + css/ + js/vendor/
-- **Single-file** (with `--single-file`): all JS/CSS/vendor inlined into one HTML (~2MB), works via `file://`
+- **Schema JSON**: hierarchical field tree with `message_id`, `app_hdr_fields`, `document_fields`, `choice_groups`
+- **COMPONENT_TEMPLATES** (JS): 3 个懒渲染组件模板 (Account/FinInstnId/PartyIdentification)
+- **COMPONENT_INSTANCES** (JS): 35 个组件实例映射 (pathPrefix + overrides)
+- **FIELD_META** (JS): 独立字段元数据
+- **appConfig.js**: 运行时配置 (templates, quick-fill, field state overrides)
 
 ## Dependencies
 
@@ -69,6 +93,7 @@ parse_pdf.py → form_page.py (calls field_renderer.py + form_rules.py + form_ap
 - CR 3032: BranchId field removal
 - CR 3039: Force date type (strip time component)
 - CR 3072: Additional removals
+- DEFAULT_CHOICE_GROUPS: OrgId/PrvtId, IBAN/Othr, Cd/Prtry 互斥兜底
 
 ## Conventions
 
@@ -78,3 +103,4 @@ parse_pdf.py → form_page.py (calls field_renderer.py + form_rules.py + form_ap
 - Progress logic uses `.panel-all-optional` class (tagged at init) to exclude unused optional sections
 - Repeating groups use `data-repeat-group` attribute with add/remove buttons
 - Generated HTML must work on `file://` protocol (no fetch for critical resources)
+- Component lazy rendering: `data-component` + `data-path-prefix` + `show.bs.collapse` trigger
