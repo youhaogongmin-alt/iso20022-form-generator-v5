@@ -46,7 +46,17 @@ var auditMode = false;
 var currentLang = "zh";
 var locateMatches = [];
 var locateIdx = -1;
+var currentSearchQuery = "";
 var autoSaveTimer = null;
+var searchBarState = {
+  initialized: false,
+  fixed: false,
+  top: 10,
+  left: 0,
+  width: 0,
+  offsetTop: 0,
+  height: 0
+};
 
 """
 
@@ -1236,6 +1246,7 @@ function searchFields(query) {
   });
   locateMatches = [];
   locateIdx = -1;
+  currentSearchQuery = query || "";
 
   if (!query || query.length < 1) {
     updateSearchCount(0);
@@ -1254,14 +1265,6 @@ function searchFields(query) {
     if (text.indexOf(q) !== -1) {
       $heading.addClass("field-locate");
       locateMatches.push($heading[0]);
-      highlightText($title[0], query);
-      // Expand this panel and ancestors
-      var $panel = $heading.closest(".panel");
-      expandCardAncestors($panel);
-      var $body = $panel.children(".panel-body.collapse");
-      if ($body.length && !$body.hasClass("in")) {
-        $body.collapse("show");
-      }
     }
   });
 
@@ -1278,8 +1281,6 @@ function searchFields(query) {
     if (labelText.indexOf(q) !== -1 || name.toLowerCase().indexOf(q) !== -1 || tag.toLowerCase().indexOf(q) !== -1) {
       $fg.addClass("field-locate");
       locateMatches.push($fg[0]);
-      highlightText($label[0], query);
-      expandCardAncestors($fg);
     }
   });
 
@@ -1291,60 +1292,95 @@ function searchFields(query) {
     if (renderState[inst.pathPrefix]) continue; // already searched via DOM
     var tpl = templates[inst.type];
     if (!tpl) continue;
-    if (searchTemplateFields(tpl.fields, q, inst.pathPrefix)) {
-      // Force render this component and re-search its DOM
-      var $container = $("[data-path-prefix='" + inst.pathPrefix + "']");
-      if ($container.length) {
-        renderComponent(inst.pathPrefix, inst.type, $container);
-        $container.collapse("show");
-        // Now find matching fields in the newly rendered DOM
-        $container.find(".field-group").each(function() {
-          var $fg = $(this);
-          var $label = $fg.find(".control-label");
-          var labelText = $label.text().toLowerCase();
-          var $input = $fg.find("input, select, textarea").first();
-          var name = $input.attr("name") || "";
-          var tag = $input.attr("data-tag") || "";
-          if (labelText.indexOf(q) !== -1 || name.toLowerCase().indexOf(q) !== -1 || tag.toLowerCase().indexOf(q) !== -1) {
-            $fg.addClass("field-locate");
-            locateMatches.push($fg[0]);
-            highlightText($label[0], query);
-            expandCardAncestors($fg);
-          }
-        });
-      }
+    var templateMatch = findTemplateMatch(tpl.fields, q, inst.pathPrefix);
+    if (templateMatch) {
+      locateMatches.push({
+        type: "component",
+        pathPrefix: inst.pathPrefix,
+        componentType: inst.type,
+        fieldPath: templateMatch.fieldPath
+      });
     }
   }
 
   updateSearchCount(locateMatches.length);
   updateSearchNavState();
 
-  if (locateMatches.length > 0) {
-    setActiveMatch(0, true);
-  }
 }
 
 function setActiveMatch(index, shouldScroll) {
   $(".field-locate-active").removeClass("field-locate-active");
   if (index < 0 || index >= locateMatches.length) return;
   locateIdx = ((index % locateMatches.length) + locateMatches.length) % locateMatches.length;
-  var $match = $(locateMatches[locateIdx]);
+  var match = resolveLocateMatch(locateMatches[locateIdx]);
+  if (!match) {
+    updateSearchNavState();
+    return;
+  }
+  var $match = $(match);
   $match.addClass("field-locate-active");
 
   // Expand parent cards
   expandCardAncestors($match);
+  highlightMatch($match);
 
   if (shouldScroll) {
     setTimeout(function() {
       var offset = $match.offset();
       if (offset) {
-        $("html, body").animate({scrollTop: offset.top - 150}, 200, function() {
-          $("#fieldSearch").focus();
-        });
+        scrollDocumentTo(getMatchScrollTop(offset.top));
       }
     }, 350);
   }
   updateSearchNavState();
+}
+
+function resolveLocateMatch(match) {
+  if (!match) return null;
+  if (match.nodeType) return match;
+  if (match.type !== "component") return null;
+
+  var $container = $("[data-path-prefix='" + escapeCssAttr(match.pathPrefix) + "']");
+  if (!$container.length) return null;
+  if ($container.attr("data-rendered") === "false") {
+    renderComponent(match.pathPrefix, match.componentType, $container);
+  }
+  if ($container.hasClass("collapse") && !$container.hasClass("in")) {
+    $container.collapse("show");
+  }
+  expandCardAncestors($container);
+
+  var $target = $("[name='" + escapeCssAttr(match.fieldPath) + "']");
+  if (!$target.length) {
+    $target = $container.find(".field-group").first().find("input, select, textarea").first();
+  }
+  return $target.length ? $target.closest(".field-group")[0] : $container[0];
+}
+
+function highlightMatch($match) {
+  var query = currentSearchQuery || $("#fieldSearch").val() || "";
+  if (!query) return;
+  if ($match.hasClass("field-group")) {
+    highlightText($match.find(".control-label")[0], query);
+  } else if ($match.hasClass("panel-heading")) {
+    highlightText($match.find(".panel-title")[0], query);
+  }
+}
+
+function getMatchScrollTop(matchTop) {
+  var barHeight = searchBarState.height || $(".search-bar").first().outerHeight() || 0;
+  var targetTop = matchTop - barHeight - searchBarState.top - 20;
+  return targetTop > 0 ? targetTop : 0;
+}
+
+function scrollDocumentTo(targetTop) {
+  $("html, body").stop(true, true);
+  try {
+    window.scrollTo(0, targetTop);
+  } catch(e) {}
+  document.documentElement.scrollTop = targetTop;
+  document.body.scrollTop = targetTop;
+  updateSearchBarFixed();
 }
 
 function expandCardAncestors($el) {
@@ -1367,6 +1403,67 @@ function stepMatch(direction) {
 function clearSearch() {
   $("#fieldSearch").val("");
   searchFields("");
+}
+
+function initSearchBarFixed() {
+  var $bar = $(".search-bar").first();
+  if (!$bar.length) return;
+  if (!$("#searchBarPlaceholder").length) {
+    $bar.before('<div id="searchBarPlaceholder" class="search-bar-placeholder"></div>');
+  }
+  searchBarState.initialized = true;
+  refreshSearchBarMetrics();
+  updateSearchBarFixed();
+}
+
+function refreshSearchBarMetrics() {
+  var $bar = $(".search-bar").first();
+  var $placeholder = $("#searchBarPlaceholder");
+  if (!$bar.length || !$placeholder.length) return;
+
+  if (searchBarState.fixed) {
+    searchBarState.left = $placeholder.offset().left;
+    searchBarState.width = $placeholder.width();
+    searchBarState.offsetTop = $placeholder.offset().top;
+  } else {
+    searchBarState.left = $bar.offset().left;
+    searchBarState.width = $bar.width();
+    searchBarState.offsetTop = $bar.offset().top;
+  }
+  searchBarState.height = $bar.outerHeight();
+  $placeholder.css("height", searchBarState.height + "px");
+}
+
+function getScrollTop() {
+  return window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+}
+
+function updateSearchBarFixed() {
+  if (!searchBarState.initialized) return;
+  var $bar = $(".search-bar").first();
+  var $placeholder = $("#searchBarPlaceholder");
+  if (!$bar.length || !$placeholder.length) return;
+
+  var shouldFix = getScrollTop() + searchBarState.top >= searchBarState.offsetTop;
+  if (shouldFix) {
+    if (!searchBarState.fixed) {
+      refreshSearchBarMetrics();
+      $placeholder.show();
+      $bar.addClass("search-bar-fixed").css({
+        left: searchBarState.left + "px",
+        width: searchBarState.width + "px"
+      });
+      searchBarState.fixed = true;
+    }
+  } else if (searchBarState.fixed) {
+    $bar.removeClass("search-bar-fixed").css({
+      left: "",
+      width: ""
+    });
+    $placeholder.hide();
+    searchBarState.fixed = false;
+    refreshSearchBarMetrics();
+  }
 }
 
 function highlightText(element, query) {
@@ -2225,14 +2322,15 @@ function restoreDraftForComponent(pathPrefix) {
   }
 }
 
-function searchTemplateFields(fields, query, pathPrefix) {
+function findTemplateMatch(fields, query, pathPrefix) {
   for (var i = 0; i < fields.length; i++) {
     var f = fields[i];
+    var fieldPath = pathPrefix + "_" + f.tag;
     var nameZh = (f.nameZh || "").toLowerCase();
     var nameEn = (f.nameEn || "").toLowerCase();
     var tag = (f.tag || "").toLowerCase();
     if (nameZh.indexOf(query) !== -1 || nameEn.indexOf(query) !== -1 || tag.indexOf(query) !== -1) {
-      return true;
+      return { fieldPath: fieldPath };
     }
     var children = f.children || [];
     if (typeof children === "string" && children.charAt(0) === "$") {
@@ -2240,11 +2338,12 @@ function searchTemplateFields(fields, query, pathPrefix) {
       if (refTpl) children = refTpl.fields;
       else children = [];
     }
-    if (children.length > 0 && searchTemplateFields(children, query, pathPrefix + "_" + f.tag)) {
-      return true;
+    if (children.length > 0) {
+      var childMatch = findTemplateMatch(children, query, fieldPath);
+      if (childMatch) return childMatch;
     }
   }
-  return false;
+  return null;
 }
 
 // ============================================================
@@ -2269,6 +2368,7 @@ $(document).ready(function() {
 
   // --- Apply runtime configuration ---
   applyRuntimeConfig();
+  initSearchBarFixed();
 
   // --- Tag field groups ---
   $(".field-group").each(function() {
@@ -2394,9 +2494,28 @@ $(document).ready(function() {
       clearSearch();
     }
   });
-  $(document).on("click", "#searchPrev", function() { stepMatch(-1); });
-  $(document).on("click", "#searchNext", function() { stepMatch(1); });
-  $(document).on("click", "#searchClear", function() { clearSearch(); });
+  $(document).on("click", "#searchPrev", function() {
+    this.blur();
+    stepMatch(-1);
+  });
+  $(document).on("click", "#searchNext", function() {
+    this.blur();
+    stepMatch(1);
+  });
+  $(document).on("click", "#searchClear", function() {
+    this.blur();
+    clearSearch();
+  });
+  $(window).on("scroll", updateSearchBarFixed);
+  $(window).on("resize", function() {
+    if (searchBarState.fixed) {
+      searchBarState.fixed = false;
+      $(".search-bar").removeClass("search-bar-fixed").css({left: "", width: ""});
+      $("#searchBarPlaceholder").hide();
+    }
+    refreshSearchBarMetrics();
+    updateSearchBarFixed();
+  });
 
   // Ctrl+F override
   $(document).on("keydown", function(e) {

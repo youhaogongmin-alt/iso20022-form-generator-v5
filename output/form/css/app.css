@@ -128,14 +128,23 @@ body {
 
 /* ===== Search Bar ===== */
 .search-bar {
-  position: sticky;
-  top: 10px;
   z-index: 450;
   padding: 8px 14px;
   margin-bottom: 12px;
   border-radius: 4px;
 }
 
+.search-bar-fixed {
+  position: fixed;
+  top: 10px;
+  z-index: 450;
+}
+
+.search-bar-placeholder {
+  display: none;
+  margin: 0 0 12px;
+  padding: 0;
+}
 
 .search-bar .form-control {
   font-size: 13px;
