@@ -20,13 +20,13 @@ This module produces the full-featured application script including:
 
 from __future__ import annotations
 
-from form_api import get_pacs008_form_api_script
+from form_api import get_form_api_script
 
 
 def get_app_js(message_id: str = "pacs.008.001.08") -> str:
     """Return the complete app.js content."""
     header = _APP_HEADER.replace("{MESSAGE_ID}", message_id)
-    return header + _APP_BODY + "\n" + get_pacs008_form_api_script()
+    return header + _APP_BODY + "\n" + get_form_api_script()
 
 
 # ==================== APP HEADER (IIFE open + globals) ====================
@@ -2432,7 +2432,13 @@ $(document).ready(function() {
     var value = $el.val() || "";
     if (!name) return;
 
+    var oldValue = formData[name] || "";
     formData[name] = value;
+
+    // Emit change event via API
+    if (window.ISO20022_FORM_API && window.ISO20022_FORM_API._emit) {
+      window.ISO20022_FORM_API._emit("change", {field: name, value: value, oldValue: oldValue});
+    }
 
     // Validate
     var msg = validateField(name, value);
@@ -2474,8 +2480,6 @@ window.APP = {
   validateField: validateField,
   validateAll: validateAll,
   findFieldMeta: findFieldMeta,
-  updateProgress: updateProgress,
-  updateJSONPreview: updateJSONPreview,
   buildISO20022JSON: buildISO20022JSON,
   showToast: showToast,
   formData: formData,

@@ -2395,7 +2395,13 @@ $(document).ready(function() {
     var value = $el.val() || "";
     if (!name) return;
 
+    var oldValue = formData[name] || "";
     formData[name] = value;
+
+    // Emit change event via API
+    if (window.ISO20022_FORM_API && window.ISO20022_FORM_API._emit) {
+      window.ISO20022_FORM_API._emit("change", {field: name, value: value, oldValue: oldValue});
+    }
 
     // Validate
     var msg = validateField(name, value);
@@ -2437,8 +2443,6 @@ window.APP = {
   validateField: validateField,
   validateAll: validateAll,
   findFieldMeta: findFieldMeta,
-  updateProgress: updateProgress,
-  updateJSONPreview: updateJSONPreview,
   buildISO20022JSON: buildISO20022JSON,
   showToast: showToast,
   formData: formData,
@@ -2450,14 +2454,20 @@ window.APP = {
 })(jQuery, window);
 
 
-// ===== PACS008_FORM_API (ES5 + jQuery, IE8+ compatible) =====
+// ===== ISO20022_FORM_API (ES5 + jQuery, IE8+ compatible) =====
 (function($, window) {
   'use strict';
 
-  var MESSAGE_ID = window._PACS008_MESSAGE_ID || 'pacs.008.001.08';
+  var appConfig = window.ISO20022_APP_CONFIG || {};
+  var MESSAGE_ID = (function() {
+    var msgs = appConfig.messages || {};
+    for (var k in msgs) { if (msgs.hasOwnProperty(k)) return k; }
+    return 'unknown';
+  })();
   var fieldMeta = window.FIELD_META || [];
   var apiEvents = {};
   var formMode = 'create';
+  var initialValues = {};
 
   function trim(s) {
     return String(s == null ? '' : s).replace(/^\s+|\s+$/g, '');
@@ -2473,8 +2483,7 @@ window.APP = {
   }
 
   function getRuntimeConfig() {
-    var root = window.ISO20022_APP_CONFIG || {};
-    var messages = root.messages || {};
+    var messages = appConfig.messages || {};
     return messages[MESSAGE_ID] || messages['default'] || {};
   }
 
@@ -2588,12 +2597,15 @@ window.APP = {
     return xml;
   }
 
+  // --- Event System ---
+
   function emitEvent(type, payload) {
     var handlers = apiEvents[type] || [];
     var event = $.extend({ type: type, messageId: MESSAGE_ID, mode: formMode }, payload || {});
     for (var i = 0; i < handlers.length; i++) {
       try { handlers[i](event); } catch (e) {}
     }
+    return event;
   }
 
   function onEvent(type, handler) {
@@ -2615,9 +2627,11 @@ window.APP = {
   function setField(key, value, options) {
     var el = resolveFieldElement(key);
     if (!el) return { ok: false, key: key, error: 'field not found' };
+    var oldValue = el.value;
     $(el).val(value == null ? '' : String(value)).trigger('change');
-    if (options && options.emit === false) { /* skip */ }
-    else emitEvent('change', { name: el.name, value: el.value, element: el });
+    if (!options || options.emit !== false) {
+      emitEvent('change', { field: el.name, value: el.value, oldValue: oldValue, element: el });
+    }
     return {
       ok: true,
       name: el.name,
@@ -2690,7 +2704,8 @@ window.APP = {
       for (var k in json.Document) { if (json.Document.hasOwnProperty(k)) { docKey = k; break; } }
       if (docKey) importNested(json.Document[docKey], 'DOC_' + docKey);
     }
-    emitEvent('load', { json: json });
+    snapshotInitialValues();
+    emitEvent('load', { json: json, fieldCount: $('[data-form-name]').length });
   }
 
   function importNested(obj, prefix) {
@@ -2717,31 +2732,84 @@ window.APP = {
   }
 
   function validate() {
-    if (window.validateAll) {
-      var valid = window.validateAll();
-      return { valid: valid, errors: window.getFormErrors ? window.getFormErrors() : [] };
+    var errorCount = 0;
+    if (window.APP && window.APP.validateAll) {
+      errorCount = window.APP.validateAll();
     }
-    return { valid: true, errors: [] };
+    var errors = getErrors();
+    var result = { valid: errors.length === 0, errorCount: errors.length, errors: errors };
+    emitEvent('validate', result);
+    return result;
   }
 
   function submit(options) {
-    var errors = validate().errors;
     var json = buildJson();
+    var xml = jsonToXml(json);
+    var evt = emitEvent('beforeSubmit', { json: json, xml: xml, cancel: false });
+    if (evt.cancel) return { cancelled: true };
+
+    var valResult = validate();
     var result = {
-      valid: errors.length === 0,
+      valid: valResult.valid,
       mode: formMode,
       values: getValues({ includeEmpty: false }),
       json: json,
-      xml: jsonToXml(json),
-      errors: errors
+      xml: xml,
+      errors: valResult.errors
     };
-    if (options && options.focusFirstError && errors.length) {
-      var firstEl = resolveFieldElement(errors[0].name);
-      if (firstEl) $(firstEl).focus();
+    if (options && options.focusFirstError && !valResult.valid) {
+      focusFirstError();
     }
     emitEvent('submit', result);
     return result;
   }
+
+  // --- New Methods: getErrors, getDirtyFields, reset, destroy ---
+
+  function getErrors() {
+    var errors = [];
+    var validationErrors = (window.APP && window.APP.validationErrors) || {};
+    for (var name in validationErrors) {
+      if (validationErrors.hasOwnProperty(name) && validationErrors[name]) {
+        var el = document.getElementById(name) || $('[name="' + name + '"]')[0] || null;
+        errors.push({ field: name, message: validationErrors[name], element: el });
+      }
+    }
+    return errors;
+  }
+
+  function snapshotInitialValues() {
+    initialValues = {};
+    $('[data-form-name]').each(function() {
+      if (this.name) initialValues[this.name] = this.value || '';
+    });
+  }
+
+  function getDirtyFields() {
+    var dirty = [];
+    $('[data-form-name]').each(function() {
+      if (!this.name) return;
+      var init = initialValues.hasOwnProperty(this.name) ? initialValues[this.name] : '';
+      if (this.value !== init) dirty.push(this.name);
+    });
+    return dirty;
+  }
+
+  function reset() {
+    for (var name in initialValues) {
+      if (!initialValues.hasOwnProperty(name)) continue;
+      var $el = $('[name="' + name + '"]');
+      if ($el.length) $el.val(initialValues[name]).trigger('change');
+    }
+  }
+
+  function destroy() {
+    apiEvents = {};
+    initialValues = {};
+    delete window.ISO20022_FORM_API;
+  }
+
+  // --- Field State ---
 
   function setFieldState(key, state, options) {
     var el = resolveFieldElement(key);
@@ -2797,12 +2865,15 @@ window.APP = {
   }
 
   function setMode(mode, options) {
+    var previousMode = formMode;
     formMode = mode || 'create';
     if (formMode === 'review' || formMode === 'readonly') {
       setPathState('AppHdr', 'readonly', { refresh: false });
       setPathState('Document', 'readonly', { refresh: false });
     }
-    if (!options || options.emit !== false) emitEvent('modechange', { mode: formMode });
+    if (!options || options.emit !== false) {
+      emitEvent('modeChange', { mode: formMode, previousMode: previousMode });
+    }
     return formMode;
   }
 
@@ -2815,7 +2886,8 @@ window.APP = {
   }
 
   // --- Expose Public API ---
-  window.PACS008_FORM_API = {
+  window.ISO20022_FORM_API = {
+    messageId: MESSAGE_ID,
     setField: setField,
     getField: getField,
     setValues: setValues,
@@ -2828,6 +2900,10 @@ window.APP = {
     getXml: function() { return jsonToXml(buildJson()); },
     validate: validate,
     submit: submit,
+    getErrors: getErrors,
+    getDirtyFields: getDirtyFields,
+    reset: reset,
+    destroy: destroy,
     setFieldState: setFieldState,
     setFieldsState: setFieldsState,
     setPathState: setPathState,
@@ -2836,12 +2912,14 @@ window.APP = {
     getMode: function() { return formMode; },
     focusFirstError: focusFirstError,
     on: onEvent,
-    off: offEvent
+    off: offEvent,
+    _emit: emitEvent
   };
 
-  // Emit ready event when DOM is loaded
+  // Snapshot initial values and emit ready event when DOM is loaded
   $(function() {
-    emitEvent('ready', { fieldCount: $('[data-form-name]').length });
+    snapshotInitialValues();
+    emitEvent('ready', { messageId: MESSAGE_ID, fieldCount: $('[data-form-name]').length });
   });
 
 })(jQuery, window);

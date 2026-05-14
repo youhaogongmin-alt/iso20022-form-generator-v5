@@ -27,28 +27,7 @@ body {
 }
 
 .main-panel {
-  margin-right: 420px;
   min-height: 600px;
-}
-
-.json-panel {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 400px;
-  overflow-y: auto;
-  z-index: 100;
-}
-
-@media (max-width: 1200px) {
-  .main-panel {
-    margin-right: 0;
-  }
-  .json-panel {
-    position: static;
-    width: 100%;
-    margin-top: 20px;
-  }
 }
 
 /* ===== Page Header ===== */
@@ -162,10 +141,14 @@ body {
 
 /* ===== Search Bar ===== */
 .search-bar {
+  position: sticky;
+  top: 10px;
+  z-index: 450;
+  padding: 8px 14px;
   margin-bottom: 12px;
-  padding: 10px 15px;
   border-radius: 4px;
 }
+
 
 .search-bar .form-control {
   font-size: 13px;
