@@ -393,18 +393,32 @@ function updateProgress() {
     }
   }
 
+  // Count rendered fields (DOM-based)
   $("input[name], select[name], textarea[name]").each(function() {
     var $input = $(this);
     var name = $input.attr("name") || "";
     var meta = findFieldMeta(name);
     var apiRequired = $input.attr("data-api-required") === "true";
     if (!((meta && meta.mult_min >= 1) || apiRequired)) return;
-    // Readonly required fields always count (Rule 1)
     if (!this.readOnly && !isEffectivelyRequired(this)) return;
     if (aloChildSet[name]) return;
     total++;
     if ($.trim($input.val())) filled++;
   });
+
+  // Count unrendered component required fields (from templates)
+  var instances = window.COMPONENT_INSTANCES || [];
+  var templates = window.COMPONENT_TEMPLATES || {};
+  for (var ci = 0; ci < instances.length; ci++) {
+    var inst = instances[ci];
+    if (renderState[inst.pathPrefix]) continue; // already counted via DOM
+    var tpl = templates[inst.type];
+    if (!tpl) continue;
+    var reqCount = countTemplateRequired(tpl.fields);
+    total += reqCount;
+    // Check formData for filled values
+    filled += countFilledFromFormData(inst.pathPrefix, tpl.fields);
+  }
 
   // Count at-least-one groups as 1 slot each
   for (var i = 0; i < atLeastOneGroups.length; i++) {
@@ -413,11 +427,12 @@ function updateProgress() {
     var groupFilled = false;
     var children = group.children || [];
     for (var j = 0; j < children.length; j++) {
-      var $field = $("[name='" + escapeCssAttr(children[j]) + "']");
-      if ($field.length && $.trim($field.val())) {
-        groupFilled = true;
-        break;
+      var val = formData[children[j]] || "";
+      if (!val) {
+        var $field = $("[name='" + escapeCssAttr(children[j]) + "']");
+        if ($field.length) val = $.trim($field.val());
       }
+      if (val) { groupFilled = true; break; }
     }
     if (groupFilled) filled++;
   }
@@ -425,6 +440,45 @@ function updateProgress() {
   var pct = total > 0 ? Math.round((filled / total) * 100) : 0;
   $("#progressFill").css("width", pct + "%");
   $("#progressText").text(t("progressText", filled).replace("{1}", total) + " (" + pct + "%)");
+}
+
+function countTemplateRequired(fields) {
+  var count = 0;
+  for (var i = 0; i < fields.length; i++) {
+    var f = fields[i];
+    var children = f.children || [];
+    if (typeof children === "string" && children.charAt(0) === "$") {
+      var refTpl = componentTemplates[children.substring(1)];
+      if (refTpl) children = refTpl.fields;
+      else children = [];
+    }
+    if (children.length > 0) {
+      count += countTemplateRequired(children);
+    } else if (f.multMin && f.multMin >= 1) {
+      count++;
+    }
+  }
+  return count;
+}
+
+function countFilledFromFormData(pathPrefix, fields) {
+  var count = 0;
+  for (var i = 0; i < fields.length; i++) {
+    var f = fields[i];
+    var fieldPath = pathPrefix + "_" + f.tag;
+    var children = f.children || [];
+    if (typeof children === "string" && children.charAt(0) === "$") {
+      var refTpl = componentTemplates[children.substring(1)];
+      if (refTpl) children = refTpl.fields;
+      else children = [];
+    }
+    if (children.length > 0) {
+      count += countFilledFromFormData(fieldPath, children);
+    } else if (f.multMin && f.multMin >= 1 && formData[fieldPath]) {
+      count++;
+    }
+  }
+  return count;
 }
 
 // ============================================================
@@ -953,34 +1007,25 @@ function checkCurrencyConsistency() {
 
 function buildISO20022JSON() {
   var json = {};
-  $(".field-group input, .field-group select, .field-group textarea").each(function() {
-    var $el = $(this);
-    var name = $el.attr("name");
-    var value = $el.val();
-    if (!name || !value) return;
-    // Skip CCY fields (handled with amount)
-    if (name.indexOf("_CCY") !== -1) return;
+  // Use formData as authoritative source (includes unrendered component fields)
+  for (var name in formData) {
+    if (!formData.hasOwnProperty(name)) continue;
+    var value = formData[name];
+    if (!value) continue;
+    if (name.indexOf("_CCY") !== -1) continue;
 
     var parts = name.split("_");
-    var prefix = parts[0]; // AH or DOC
     var obj = json;
     for (var i = 1; i < parts.length; i++) {
       var key = parts[i];
       if (i === parts.length - 1) {
         obj[key] = value;
-        // Check for CCY companion
-        var ccyName = name + "_CCY";
-        var $ccy = $("[name='" + escapeCssAttr(ccyName) + "']");
-        if (!$ccy.length) {
-          ccyName = name.replace(/_[^_]+$/, "_CCY");
-          $ccy = $("[name='" + escapeCssAttr(ccyName) + "']");
-        }
       } else {
         if (!obj[key]) obj[key] = {};
         obj = obj[key];
       }
     }
-  });
+  }
   return json;
 }
 
@@ -1238,6 +1283,39 @@ function searchFields(query) {
     }
   });
 
+  // Search unrendered component fields (by template metadata)
+  var instances = window.COMPONENT_INSTANCES || [];
+  var templates = window.COMPONENT_TEMPLATES || {};
+  for (var ci = 0; ci < instances.length; ci++) {
+    var inst = instances[ci];
+    if (renderState[inst.pathPrefix]) continue; // already searched via DOM
+    var tpl = templates[inst.type];
+    if (!tpl) continue;
+    if (searchTemplateFields(tpl.fields, q, inst.pathPrefix)) {
+      // Force render this component and re-search its DOM
+      var $container = $("[data-path-prefix='" + inst.pathPrefix + "']");
+      if ($container.length) {
+        renderComponent(inst.pathPrefix, inst.type, $container);
+        $container.collapse("show");
+        // Now find matching fields in the newly rendered DOM
+        $container.find(".field-group").each(function() {
+          var $fg = $(this);
+          var $label = $fg.find(".control-label");
+          var labelText = $label.text().toLowerCase();
+          var $input = $fg.find("input, select, textarea").first();
+          var name = $input.attr("name") || "";
+          var tag = $input.attr("data-tag") || "";
+          if (labelText.indexOf(q) !== -1 || name.toLowerCase().indexOf(q) !== -1 || tag.toLowerCase().indexOf(q) !== -1) {
+            $fg.addClass("field-locate");
+            locateMatches.push($fg[0]);
+            highlightText($label[0], query);
+            expandCardAncestors($fg);
+          }
+        });
+      }
+    }
+  }
+
   updateSearchCount(locateMatches.length);
   updateSearchNavState();
 
@@ -1466,8 +1544,11 @@ function restoreDraft() {
     var raw = localStorage.getItem(DRAFT_KEY);
     if (!raw) return false;
     var draft = JSON.parse(raw);
+    // Populate formData (authoritative store)
     for (var name in draft) {
       if (!draft.hasOwnProperty(name)) continue;
+      formData[name] = draft[name];
+      // Apply to rendered DOM elements
       var $field = $("[name='" + escapeCssAttr(name) + "']");
       if ($field.length) $field.val(draft[name]);
     }
@@ -1477,12 +1558,13 @@ function restoreDraft() {
 
 function saveDraft() {
   try {
+    // Use formData as source (includes unrendered component values)
     var draft = {};
-    $(".field-group input, .field-group select, .field-group textarea").each(function() {
-      var $el = $(this);
-      var name = $el.attr("name");
-      if (name && $el.val()) draft[name] = $el.val();
-    });
+    for (var name in formData) {
+      if (formData.hasOwnProperty(name) && formData[name]) {
+        draft[name] = formData[name];
+      }
+    }
     localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
   } catch(e) {}
 }
@@ -1899,6 +1981,28 @@ function restoreDraftForComponent(pathPrefix) {
       if ($field.length) $field.val(formData[name]);
     }
   }
+}
+
+function searchTemplateFields(fields, query, pathPrefix) {
+  for (var i = 0; i < fields.length; i++) {
+    var f = fields[i];
+    var nameZh = (f.nameZh || "").toLowerCase();
+    var nameEn = (f.nameEn || "").toLowerCase();
+    var tag = (f.tag || "").toLowerCase();
+    if (nameZh.indexOf(query) !== -1 || nameEn.indexOf(query) !== -1 || tag.indexOf(query) !== -1) {
+      return true;
+    }
+    var children = f.children || [];
+    if (typeof children === "string" && children.charAt(0) === "$") {
+      var refTpl = componentTemplates[children.substring(1)];
+      if (refTpl) children = refTpl.fields;
+      else children = [];
+    }
+    if (children.length > 0 && searchTemplateFields(children, query, pathPrefix + "_" + f.tag)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 // ============================================================
