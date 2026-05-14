@@ -254,6 +254,48 @@ def _count_template_leaves(node: dict) -> int:
 # ==================== Field Metadata Collection ====================
 
 
+def _compute_instance_overrides(field: dict, comp_type: str) -> dict:
+    """Compute per-instance overrides relative to the component template.
+
+    Checks for fields that have different mult_min (mandatory overrides),
+    different max_length (type changes), or are marked as removed in this
+    specific instance but present in the template.
+
+    Returns a dict with keys: mandatory, typeChanges, removed (only if non-empty).
+    """
+    overrides = {}
+    mandatory = []
+    type_changes = {}
+
+    def walk(children: list, parent_tag: str) -> None:
+        for c in children:
+            tag = c.get("xml_tag", "")
+            # Check mandatory overrides (mult_min forced to 1 by rules)
+            if c.get("mult_min", 0) >= 1 and not c.get("is_fixed", False):
+                if not c.get("children"):
+                    mandatory.append(tag)
+            # Check type/length overrides from rules
+            if c.get("type_override"):
+                tc = {}
+                if c.get("max_length", 0) > 0:
+                    tc["maxLen"] = c["max_length"]
+                if c.get("type_code") in ("date", "time"):
+                    tc["type"] = c["type_code"]
+                if tc:
+                    type_changes[tag] = tc
+            # Recurse into children
+            if c.get("children"):
+                walk(c["children"], tag)
+
+    walk(field.get("children", []), field.get("xml_tag", ""))
+
+    if mandatory:
+        overrides["mandatory"] = mandatory
+    if type_changes:
+        overrides["typeChanges"] = type_changes
+    return overrides
+
+
 def _collect_field_metadata(app_hdr_fields: list, document_fields: list) -> tuple:
     """Walk field trees and collect metadata.
 
@@ -296,7 +338,8 @@ def _collect_field_metadata(app_hdr_fields: list, document_fields: list) -> tupl
             # Check if this is a component instance (lazy rendered)
             comp_type = detect_component_type(f) if f.get("children") else None
             if comp_type:
-                component_instances.append({
+                overrides = _compute_instance_overrides(f, comp_type)
+                instance_data = {
                     "type": comp_type,
                     "pathPrefix": form_name,
                     "isoPath": iso_path,
@@ -304,7 +347,10 @@ def _collect_field_metadata(app_hdr_fields: list, document_fields: list) -> tupl
                     "nameEn": f.get("name_en", ""),
                     "multMin": mult_min,
                     "multMax": f.get("mult_max", 1),
-                })
+                }
+                if overrides:
+                    instance_data["overrides"] = overrides
+                component_instances.append(instance_data)
                 # Skip children — they'll be rendered by JS component template
                 continue
 

@@ -1757,8 +1757,17 @@ function renderComponent(pathPrefix, componentType, $container) {
   var template = componentTemplates[componentType];
   if (!template) return;
 
+  // Find instance overrides
+  var overrides = null;
+  for (var i = 0; i < componentInstances.length; i++) {
+    if (componentInstances[i].pathPrefix === pathPrefix) {
+      overrides = componentInstances[i].overrides || null;
+      break;
+    }
+  }
+
   var prefix = pathPrefix.indexOf("AH_") === 0 ? "AH" : "DOC";
-  var html = buildComponentHtml(template.fields, pathPrefix, prefix);
+  var html = buildComponentHtml(template.fields, pathPrefix, prefix, overrides);
   $container.html(html);
   $container.attr("data-rendered", "true");
   renderState[pathPrefix] = true;
@@ -1766,7 +1775,7 @@ function renderComponent(pathPrefix, componentType, $container) {
   initComponentAfterRender($container, pathPrefix);
 }
 
-function buildComponentHtml(fields, pathPrefix, prefix) {
+function buildComponentHtml(fields, pathPrefix, prefix, overrides) {
   var parts = [];
   var leafBuf = [];
 
@@ -1781,18 +1790,40 @@ function buildComponentHtml(fields, pathPrefix, prefix) {
   for (var i = 0; i < fields.length; i++) {
     var f = fields[i];
     var fieldPath = pathPrefix + "_" + f.tag;
-    if (f.type === "container") {
+    // Apply overrides to field
+    var ef = applyFieldOverrides(f, overrides);
+    if (ef.type === "container") {
       flushLeaves();
-      parts.push(buildContainerHtml(f, fieldPath, prefix));
+      parts.push(buildContainerHtml(ef, fieldPath, prefix, overrides));
     } else {
-      leafBuf.push(buildLeafHtml(f, fieldPath, prefix));
+      leafBuf.push(buildLeafHtml(ef, fieldPath, prefix));
     }
   }
   flushLeaves();
   return parts.join("\n");
 }
 
-function buildContainerHtml(f, fieldPath, prefix) {
+function applyFieldOverrides(f, overrides) {
+  if (!overrides) return f;
+  var tag = f.tag;
+  var result = {};
+  for (var k in f) { if (f.hasOwnProperty(k)) result[k] = f[k]; }
+  // Apply mandatory override
+  if (overrides.mandatory) {
+    for (var i = 0; i < overrides.mandatory.length; i++) {
+      if (overrides.mandatory[i] === tag) { result.multMin = 1; break; }
+    }
+  }
+  // Apply type changes
+  if (overrides.typeChanges && overrides.typeChanges[tag]) {
+    var tc = overrides.typeChanges[tag];
+    if (tc.maxLen) result.maxLen = tc.maxLen;
+    if (tc.type) result.type = tc.type;
+  }
+  return result;
+}
+
+function buildContainerHtml(f, fieldPath, prefix, overrides) {
   var children = f.children || [];
   if (typeof children === "string" && children.charAt(0) === "$") {
     var refName = children.substring(1);
@@ -1810,11 +1841,11 @@ function buildContainerHtml(f, fieldPath, prefix) {
 
   var childHtml = "";
   if (multMax > 1) {
-    childHtml = buildRepeatGroupHtml(f, children, fieldPath, prefix, multMin, multMax);
+    childHtml = buildRepeatGroupHtml(f, children, fieldPath, prefix, multMin, multMax, overrides);
     return childHtml;
   }
 
-  var innerHtml = buildComponentHtml(children, fieldPath, prefix);
+  var innerHtml = buildComponentHtml(children, fieldPath, prefix, overrides);
   return '<div class="panel panel-default">\n' +
     '  <div class="panel-heading' + headingClass + '" data-toggle="collapse" data-target="#' + collapseId + '">\n' +
     '    <h4 class="panel-title">\n' +
@@ -1828,10 +1859,10 @@ function buildContainerHtml(f, fieldPath, prefix) {
     '</div>';
 }
 
-function buildRepeatGroupHtml(f, children, fieldPath, prefix, multMin, multMax) {
+function buildRepeatGroupHtml(f, children, fieldPath, prefix, multMin, multMax, overrides) {
   var repeatId = "repeat_" + fieldPath;
   var maxDisp = multMax >= 9999 ? "*" : String(multMax);
-  var innerHtml = buildComponentHtml(children, fieldPath, prefix);
+  var innerHtml = buildComponentHtml(children, fieldPath, prefix, overrides);
   return '<div class="repeat-group panel panel-default" id="' + repeatId + '" ' +
     'data-repeat-group="' + repeatId + '" data-min="' + multMin + '" data-max="' + multMax + '">\n' +
     '  <div class="panel-heading">\n' +
