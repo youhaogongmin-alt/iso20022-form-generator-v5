@@ -11,6 +11,7 @@ import html
 
 from form_rules import (
     COMPONENT_SIGNATURES,
+    FIELD_NAME_ZH_MAP,
     force_date_type,
     is_proxy_tp_field,
     should_remove_field,
@@ -64,8 +65,12 @@ def render_field_html(field: dict, prefix: str, parent_path: str) -> str:
     """
     xml_tag = field.get("xml_tag", "")
     name_en = field.get("name_en", "")
-    name_zh = field.get("name_zh", name_en)
+    name_zh = field.get("name_zh", "") or name_en
     type_code = field.get("type_code", "text")
+
+    # Apply Chinese translation if not translated from PDF
+    if name_zh == name_en and xml_tag in FIELD_NAME_ZH_MAP:
+        name_zh = FIELD_NAME_ZH_MAP[xml_tag]
     mult_min = field.get("mult_min", 0)
     mult_max = field.get("mult_max", 1)
     regex_pattern = field.get("regex_pattern", "")
@@ -382,9 +387,11 @@ def _render_container(
 ) -> str:
     """Render a container field (has children) as a Bootstrap panel or repeat group."""
     name_en = field.get("name_en", "")
-    name_zh = field.get("name_zh", name_en)
+    name_zh = field.get("name_zh", "") or name_en
     xml_tag = field.get("xml_tag", "")
     children = field.get("children", [])
+    if name_zh == name_en and xml_tag in FIELD_NAME_ZH_MAP:
+        name_zh = FIELD_NAME_ZH_MAP[xml_tag]
 
     # Bug 6 fix: parent nodes without explicit multiplicity should be mandatory
     if not field.get("multiplicity", "") and children:
@@ -441,20 +448,22 @@ def _render_component_placeholder(
     is_fixed: bool,
     fixed_value: str,
 ) -> str:
-    """Render a component instance as a collapsed placeholder panel for lazy rendering."""
+    """Render a component instance as a placeholder panel for lazy rendering."""
     badge = _badge_html(mult_min, is_fixed, fixed_value)
     collapse_id = f"collapse_{form_name}"
+    heading_class = "" if mult_min >= 1 else " collapsed"
+    collapse_in = " in" if mult_min >= 1 else ""
 
     return (
         f'<div class="panel panel-default">\n'
-        f'  <div class="panel-heading collapsed" data-toggle="collapse" '
+        f'  <div class="panel-heading{heading_class}" data-toggle="collapse" '
         f'data-target="#{collapse_id}">\n'
         f'    <h4 class="panel-title">\n'
         f"      {html.escape(name_zh)} / {html.escape(name_en)} {badge}\n"
         f'      <span class="toggle-icon">&#9660;</span>\n'
         f"    </h4>\n"
         f"  </div>\n"
-        f'  <div id="{collapse_id}" class="panel-body collapse"\n'
+        f'  <div id="{collapse_id}" class="panel-body collapse{collapse_in}"\n'
         f'       data-component="{html.escape(comp_type)}"\n'
         f'       data-path-prefix="{html.escape(form_name)}"\n'
         f'       data-rendered="false">\n'
@@ -485,7 +494,8 @@ def _render_repeat_group(
         f'<div class="repeat-group panel panel-default" id="{repeat_id}" '
         f'data-repeat-group="{repeat_id}" data-min="{mult_min}" data-max="{mult_max}">\n'
         f'  <div class="panel-heading">\n'
-        f"    <span>{html.escape(name_zh)} / {html.escape(name_en)}</span>\n"
+        f'    <h4 class="panel-title" style="display:inline">'
+        f"{html.escape(name_zh)} / {html.escape(name_en)}</h4>\n"
         f'    <span class="label label-default">[{mult_min}..{max_disp}]</span>\n'
         f'    <button type="button" class="btn btn-xs btn-primary btn-repeat-add pull-right">'
         f"+ 添加</button>\n"
@@ -552,7 +562,8 @@ def _render_repeat_leaf(
         f'<div class="repeat-group repeat-leaf panel panel-default" id="{repeat_id}" '
         f'data-repeat-group="{repeat_id}" data-min="{mult_min}" data-max="{mult_max}">\n'
         f'  <div class="panel-heading">\n'
-        f"    <span>{html.escape(name_zh)} / {html.escape(name_en)}</span>\n"
+        f'    <h4 class="panel-title" style="display:inline">'
+        f"{html.escape(name_zh)} / {html.escape(name_en)}</h4>\n"
         f'    <span class="label label-default">[{mult_min}..{max_disp}]</span>\n'
         f'    <button type="button" class="btn btn-xs btn-primary btn-repeat-add pull-right">'
         f"+ 添加</button>\n"

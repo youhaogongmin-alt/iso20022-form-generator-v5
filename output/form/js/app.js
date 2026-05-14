@@ -1390,8 +1390,11 @@ function saveRepeatTemplate($group) {
 }
 
 function addRepeatItem(groupId) {
-  var $group = $("[data-repeat-group='" + groupId + "']");
+  var $group = $("[data-repeat-group='" + groupId + "']").first();
   if (!$group.length) return;
+
+  // Ensure template is saved (needed for groups with rewritten IDs)
+  saveRepeatTemplate($group);
 
   var max = parseInt($group.attr("data-max"), 10) || 0;
   var $items = getDirectRepeatItems($group);
@@ -1409,10 +1412,8 @@ function addRepeatItem(groupId) {
   } else if ($items.length > 0) {
     $newItem = $items.first().clone();
     $newItem.find("input, select, textarea").val("");
-    // Save as template for future adds
     repeatTemplates[groupId] = $newItem.clone();
   } else {
-    // Empty container (min=0): build a default item from the group's inner structure
     $newItem = buildDefaultRepeatItem($group);
     if (!$newItem) return;
     repeatTemplates[groupId] = $newItem.clone();
@@ -1421,10 +1422,24 @@ function addRepeatItem(groupId) {
   $newItem.find(".has-error").removeClass("has-error");
   $newItem.find(".error-msg").text("").hide();
 
+  // Rewrite nested IDs to avoid duplicates when cloning repeat items
+  var newIndex = count + 1;
+  rewriteNestedIds($newItem, newIndex);
+
   $group.children(".repeat-items").append($newItem);
   renumberRepeatItems($group);
   updateRepeatAddState($group);
   updateRepeatRemoveState($group);
+
+  // Render any component placeholders that are already expanded (collapse in)
+  $newItem.find("[data-component][data-rendered='false']").each(function() {
+    var $comp = $(this);
+    if ($comp.hasClass("in")) {
+      var type = $comp.attr("data-component");
+      var pathPrefix = $comp.attr("data-path-prefix");
+      renderComponent(pathPrefix, type, $comp);
+    }
+  });
 }
 
 function buildDefaultRepeatItem($group) {
@@ -1466,8 +1481,52 @@ function removeRepeatItem(btn) {
 function renumberRepeatItems($group) {
   getDirectRepeatItems($group).each(function(idx) {
     var $item = $(this);
-    $item.children(".repeat-index").text((idx + 1));
+    $item.attr("data-index", idx + 1);
+    $item.children(".repeat-index").text("第" + (idx + 1) + "条");
   });
+}
+
+function rewriteNestedIds($item, index) {
+  var suffix = "_" + index;
+
+  // Rewrite inner repeat-group IDs
+  $item.find("[data-repeat-group]").each(function() {
+    var $rg = $(this);
+    var oldId = $rg.attr("data-repeat-group");
+    var newId = oldId + suffix;
+    $rg.attr("id", newId).attr("data-repeat-group", newId);
+    $rg.children(".repeat-items").attr("id", newId + "_items");
+  });
+
+  // Rewrite collapse panel IDs and their data-target references
+  $item.find("[id^='collapse_']").each(function() {
+    var $panel = $(this);
+    var oldId = $panel.attr("id");
+    var newId = oldId + suffix;
+    $panel.attr("id", newId);
+  });
+  $item.find("[data-target^='#collapse_']").each(function() {
+    var $heading = $(this);
+    var oldTarget = $heading.attr("data-target");
+    $heading.attr("data-target", oldTarget + suffix);
+  });
+
+  // Rewrite form field names/ids for formData uniqueness
+  $item.find("[data-form-name]").each(function() {
+    var $fg = $(this);
+    var oldName = $fg.attr("data-form-name");
+    var newName = oldName + suffix;
+    $fg.attr("data-form-name", newName);
+    $fg.find("input,select,textarea").each(function() {
+      var $input = $(this);
+      if ($input.attr("name") === oldName) {
+        $input.attr("name", newName).attr("id", newName).attr("data-form-name", newName);
+      }
+    });
+    $fg.find("label[for='" + oldName + "']").attr("for", newName);
+  });
+
+  $item.attr("data-index", index);
 }
 
 function updateRepeatAddState($group) {
@@ -1864,7 +1923,7 @@ function buildRepeatGroupHtml(f, children, fieldPath, prefix, multMin, multMax, 
   return '<div class="repeat-group panel panel-default" id="' + repeatId + '" ' +
     'data-repeat-group="' + repeatId + '" data-min="' + multMin + '" data-max="' + multMax + '">\n' +
     '  <div class="panel-heading">\n' +
-    '    <span>' + escapeHtml(f.nameZh || "") + ' / ' + escapeHtml(f.nameEn || "") + '</span>\n' +
+    '    <h4 class="panel-title" style="display:inline">' + escapeHtml(f.nameZh || "") + ' / ' + escapeHtml(f.nameEn || "") + '</h4>\n' +
     '    <span class="label label-default">[' + multMin + '..' + maxDisp + ']</span>\n' +
     '    <button type="button" class="btn btn-xs btn-primary btn-repeat-add pull-right">+ 添加</button>\n' +
     '  </div>\n' +
@@ -1942,7 +2001,7 @@ function buildRepeatLeafHtml(f, fieldPath, prefix, multMin, multMax) {
   return '<div class="repeat-group repeat-leaf panel panel-default" id="' + repeatId + '" ' +
     'data-repeat-group="' + repeatId + '" data-min="' + multMin + '" data-max="' + multMax + '">\n' +
     '  <div class="panel-heading">\n' +
-    '    <span>' + escapeHtml(f.nameZh || "") + ' / ' + escapeHtml(f.nameEn || "") + '</span>\n' +
+    '    <h4 class="panel-title" style="display:inline">' + escapeHtml(f.nameZh || "") + ' / ' + escapeHtml(f.nameEn || "") + '</h4>\n' +
     '    <span class="label label-default">[' + multMin + '..' + maxDisp + ']</span>\n' +
     '    <button type="button" class="btn btn-xs btn-primary btn-repeat-add pull-right">+ 添加</button>\n' +
     '  </div>\n' +
@@ -2018,8 +2077,77 @@ function initComponentAfterRender($container, pathPrefix) {
 
 function initChoiceGroupsInContainer($container) {
   var groups = window.CHOICE_GROUPS || [];
-  // Simplified: find choice options within this container and apply mutual exclusion
-  // Full implementation reuses existing choice logic scoped to container
+  if (!groups.length) return;
+
+  for (var i = 0; i < groups.length; i++) {
+    var group = groups[i];
+    var options = group.options || [];
+    if (options.length < 2) continue;
+
+    var firstTag = options[0].tag;
+
+    // Search for choice groups by leaf field match
+    $container.find(".field-group[data-form-name$='_" + firstTag + "']").each(function() {
+      var $first = $(this);
+      var baseFormName = _getBaseName($first, firstTag);
+      if (!baseFormName) return;
+
+      var panelSet = [];
+      var allFound = true;
+      for (var j = 0; j < options.length; j++) {
+        var targetName = baseFormName + options[j].tag;
+        var $el = $container.find(".field-group[data-form-name='" + targetName + "']");
+        if (!$el.length) {
+          $el = $container.find("[id$='" + targetName + "']").filter("[id^='collapse_']").closest(".panel");
+        }
+        if ($el.length) {
+          panelSet.push({ tag: options[j].tag, name: options[j].name, $el: $el });
+        } else { allFound = false; break; }
+      }
+      if (!allFound || panelSet.length !== options.length) return;
+
+      _updateChoiceState(panelSet);
+      for (var p = 0; p < panelSet.length; p++) {
+        (function(panels) {
+          panels[p].$el.on("input change", "input,select,textarea", function() {
+            _updateChoiceState(panels);
+          });
+        })(panelSet);
+      }
+    });
+
+    // Search for choice groups by container panel match
+    $container.find("[id^='collapse_']").each(function() {
+      var id = $(this).attr("id");
+      if (!_endsWithTag(id, firstTag)) return;
+      var $panel = $(this).closest(".panel");
+      var baseFormName = _getBaseName($panel, firstTag);
+      if (!baseFormName) return;
+
+      var panelSet = [];
+      var allFound = true;
+      for (var j = 0; j < options.length; j++) {
+        var targetName = baseFormName + options[j].tag;
+        var $el = $container.find("[id$='" + targetName + "']").filter("[id^='collapse_']").closest(".panel");
+        if (!$el.length) {
+          $el = $container.find(".field-group[data-form-name='" + targetName + "']");
+        }
+        if ($el.length) {
+          panelSet.push({ tag: options[j].tag, name: options[j].name, $el: $el });
+        } else { allFound = false; break; }
+      }
+      if (!allFound || panelSet.length !== options.length) return;
+
+      _updateChoiceState(panelSet);
+      for (var p = 0; p < panelSet.length; p++) {
+        (function(panels) {
+          panels[p].$el.on("input change", "input,select,textarea", function() {
+            _updateChoiceState(panels);
+          });
+        })(panelSet);
+      }
+    });
+  }
 }
 
 function buildTooltipsInContainer($container) {
@@ -2176,6 +2304,16 @@ $(document).ready(function() {
 
   // --- Restore quick draft silently ---
   restoreQuickDraft();
+
+  // --- Render required components that are already expanded ---
+  $("[data-component][data-rendered='false']").each(function() {
+    var $comp = $(this);
+    if ($comp.hasClass("in")) {
+      var type = $comp.attr("data-component");
+      var pathPrefix = $comp.attr("data-path-prefix");
+      renderComponent(pathPrefix, type, $comp);
+    }
+  });
 
   // --- Initial UI state ---
   $(".audit-badge").hide();

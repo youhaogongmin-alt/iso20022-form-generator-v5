@@ -5,6 +5,12 @@ so field and page renderers stay focused on HTML generation.
 """
 
 from __future__ import annotations
+
+# ==================== Chinese Translation Map ====================
+# Fallback translations for fields whose name_zh is not in parse_pdf.FIELD_TRANSLATIONS.
+# Keyed by xml_tag (not name_en) as a last-resort fallback in field_renderer.
+FIELD_NAME_ZH_MAP = {}
+
 # ==================== CBPR+ SR2026 CR Fixes ====================
 
 # F02 (CR 3031): Remove Prtry from Scheme Name
@@ -265,6 +271,18 @@ COMPONENT_SIGNATURES = {
 
 # Ordered by implementation phase (smallest first)
 COMPONENT_PHASE_ORDER = ['Account', 'FinInstnId', 'PartyIdentification']
+
+# ==================== Default Choice Groups (ISO 20022 XOR) ====================
+# These are standard mutual exclusion rules from the ISO 20022 data model.
+# Applied when no rules PDF provides choice_groups.
+DEFAULT_CHOICE_GROUPS = [
+    {"options": [{"tag": "OrgId", "name": "Organisation Identification"},
+                 {"tag": "PrvtId", "name": "Private Identification"}]},
+    {"options": [{"tag": "IBAN", "name": "IBAN"},
+                 {"tag": "Othr", "name": "Other"}]},
+    {"options": [{"tag": "Cd", "name": "Code"},
+                 {"tag": "Prtry", "name": "Proprietary"}]},
+]
 
 # F07 (CR 3072): Fields that become mandatory when parent section has value
 CONDITIONAL_MANDATORY = {

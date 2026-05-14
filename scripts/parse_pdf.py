@@ -208,8 +208,10 @@ FIELD_TRANSLATIONS = {
     "Proxy": "代理",
     "Full Message": "完整消息",
     "Business Application Header V02": "业务应用头V02",
+    "Business Application Header V02 (head.001.001.02)": "业务应用头V02 (head.001.001.02)",
     "Document": "文档",
     "FI To FI Customer Credit Transfer V08": "金融机构间客户贷记转账V08",
+    "FI To FI Customer Credit Transfer V08 (pacs.008.001.08)": "金融机构间客户贷记转账V08 (pacs.008.001.08)",
     "Group Header": "组头",
     "Xml Attribute": "XML属性",
     "Identification Number": "识别号",
@@ -229,6 +231,55 @@ FIELD_TRANSLATIONS = {
     "Due Date": "到期日",
     "Invoice Date": "发票日期",
     "Document Number": "文档编号",
+
+    # Additional translations for container/repeat fields
+    "Ultimate Debtor": "最终付款人",
+    "Ultimate Creditor": "最终收款人",
+    "Initiating Party": "发起方",
+    "Authority": "监管机构",
+    "Code Or Proprietary": "代码或自定义",
+    "Invoicer": "开票方",
+    "Invoicee": "受票方",
+    "Tax Remittance": "税务汇款",
+    "Authorisation": "授权",
+    "Period": "期间",
+    "From To Date": "起止日期",
+    "Tax Amount": "税额",
+    "Garnishment Remittance": "扣押汇款",
+    "Garnishee": "被扣押方",
+    "Garnishment Administrator": "扣押管理人",
+    "Details": "明细",
+    "Information": "信息",
+    "Remittance Location Details": "汇款地点明细",
+    "Structured": "结构化信息",
+    "Discount Applied Amount": "已用折扣金额",
+    "Adjustment Amount And Reason": "调整金额及原因",
+    "Record": "记录",
+    "Additional Remittance Information": "附加汇款信息",
+    "Additional Information": "附加信息",
+    "Any BIC": "任意BIC",
+    "Category": "类别",
+    "Category Details": "类别明细",
+    "Certificate Identification": "证书标识",
+    "Credit Note Amount": "贷项通知金额",
+    "Date": "日期",
+    "Debit Credit Reporting Indicator": "借贷报告指示",
+    "Debtor Status": "付款人状态",
+    "Description": "描述",
+    "Due Payable Amount": "应付金额",
+    "Electronic Address": "电子地址",
+    "Employee Termination Indicator": "雇员终止指示",
+    "Family Medical Insurance Indicator": "家庭医疗保险指示",
+    "Forms Code": "表格代码",
+    "From Date": "起始日期",
+    "Administration Zone": "管辖区域",
+    "Number": "编号",
+    "Related Date": "相关日期",
+    "Reference": "参考",
+    "Tax Identification Number": "税务识别号",
+    "Remittance Location Method": "汇款地点方式",
+    "Remittance Location Electronic Address": "汇款地点电子地址",
+    "Remittance Location Postal Address": "汇款地点邮政地址",
 }
 
 # Code value translations
@@ -666,7 +717,7 @@ class ISO20022Parser:
         # [2] Name
         if row[2]:
             f.name_en = clean_text(str(row[2]).replace('\n', ' '))
-            f.name_zh = translate_name(f.name_en)
+            f.name_zh = ""
         else:
             return None
 

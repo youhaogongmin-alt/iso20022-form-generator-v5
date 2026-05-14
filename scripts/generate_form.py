@@ -33,9 +33,45 @@ def resolve_output_dir() -> str:
     return os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'output')
 
 
-def write_multi_file(schema: dict, output_dir: str) -> str:
-    """Write multi-file output: index.html + js/ + css/ + js/vendor/."""
+def _detect_variant(pdf_path: str, message_id: str) -> str:
+    """Detect variant suffix from input PDF parent directory name.
+
+    e.g. dev/input/pacs.008.stp/usage_guideline.pdf with message_id=pacs.008.001.08
+    → directory "pacs.008.stp" contains "pacs.008" + extra ".stp" → variant="stp"
+    """
+    if not pdf_path:
+        return ""
+    parent_dir = os.path.basename(os.path.dirname(os.path.abspath(pdf_path)))
+    # Extract short message prefix: "pacs.008.001.08" → "pacs.008"
+    parts = message_id.split(".")
+    if len(parts) >= 2:
+        msg_prefix = parts[0] + "." + parts[1]
+    else:
+        msg_prefix = message_id
+    # Check if directory name has extra suffix beyond the prefix
+    if parent_dir.startswith(msg_prefix) and len(parent_dir) > len(msg_prefix):
+        suffix = parent_dir[len(msg_prefix):]
+        # Strip leading dot/underscore
+        suffix = suffix.lstrip("._")
+        if suffix:
+            return suffix
+    return ""
+
+
+def write_multi_file(schema: dict, output_dir: str, safe_name: str = "") -> str:
+    """Write multi-file output: <msg>.html + js/ + css/ + js/vendor/.
+
+    Flat structure: all messages share js/css directories.
+    Per-message files use message_id-based names:
+      - <safe_name>.html
+      - js/<safe_name>_fieldMeta.js
+      - js/<safe_name>_appConfig.js
+    Shared files (written once, reused across messages):
+      - js/app.js, css/app.css, js/vendor/*, css/bootstrap*
+    """
     message_id = schema.get("message_id", "unknown")
+    if not safe_name:
+        safe_name = message_id.replace('.', '_')
 
     # Create directories
     js_dir = os.path.join(output_dir, "js")
@@ -45,29 +81,30 @@ def write_multi_file(schema: dict, output_dir: str) -> str:
     os.makedirs(css_dir, exist_ok=True)
     os.makedirs(vendor_js_dir, exist_ok=True)
 
-    # Write CSS
+    # Write shared CSS (overwrite is fine — same content for all messages)
     css_path = os.path.join(css_dir, "app.css")
     with open(css_path, "w", encoding="utf-8") as f:
         f.write(get_app_css())
     print(f"  css/app.css ({os.path.getsize(css_path):,} bytes)")
 
-    # Write JS files
+    # Write shared app.js
     app_js_path = os.path.join(js_dir, "app.js")
     with open(app_js_path, "w", encoding="utf-8") as f:
         f.write(get_app_js(message_id))
     print(f"  js/app.js ({os.path.getsize(app_js_path):,} bytes)")
 
-    field_meta_path = os.path.join(js_dir, "fieldMeta.js")
+    # Write per-message fieldMeta and appConfig
+    field_meta_path = os.path.join(js_dir, f"{safe_name}_fieldMeta.js")
     with open(field_meta_path, "w", encoding="utf-8") as f:
         f.write(generate_field_meta_js(schema))
-    print(f"  js/fieldMeta.js ({os.path.getsize(field_meta_path):,} bytes)")
+    print(f"  js/{safe_name}_fieldMeta.js ({os.path.getsize(field_meta_path):,} bytes)")
 
-    app_config_path = os.path.join(js_dir, "appConfig.js")
+    app_config_path = os.path.join(js_dir, f"{safe_name}_appConfig.js")
     with open(app_config_path, "w", encoding="utf-8") as f:
         f.write(generate_app_config_js(schema))
-    print(f"  js/appConfig.js ({os.path.getsize(app_config_path):,} bytes)")
+    print(f"  js/{safe_name}_appConfig.js ({os.path.getsize(app_config_path):,} bytes)")
 
-    # Copy vendor files
+    # Copy vendor files (shared)
     vendor_files = {
         "jquery-1.12.4.min.js": "jquery-1.12.4.min.js",
         "bootstrap-3.4.1/js/bootstrap.min.js": "bootstrap.min.js",
@@ -85,7 +122,7 @@ def write_multi_file(schema: dict, output_dir: str) -> str:
                 with open(dst, "wb") as df:
                     df.write(sf.read())
 
-    # Copy Bootstrap CSS
+    # Copy Bootstrap CSS (shared)
     bs_css_files = ["bootstrap.min.css", "bootstrap-theme.min.css"]
     for css_file in bs_css_files:
         src = os.path.join(VENDOR_DIR, "bootstrap-3.4.1", "css", css_file)
@@ -95,12 +132,12 @@ def write_multi_file(schema: dict, output_dir: str) -> str:
                 with open(dst, "wb") as df:
                     df.write(sf.read())
 
-    # Write index.html
-    html = generate_html(schema)
-    html_path = os.path.join(output_dir, "index.html")
+    # Write per-message HTML
+    html = generate_html(schema, safe_name=safe_name)
+    html_path = os.path.join(output_dir, f"{safe_name}.html")
     with open(html_path, "w", encoding="utf-8") as f:
         f.write(html)
-    print(f"  index.html ({os.path.getsize(html_path):,} bytes)")
+    print(f"  {safe_name}.html ({os.path.getsize(html_path):,} bytes)")
 
     return html_path
 
@@ -430,69 +467,104 @@ def _path_matches_field(rule_path: str, xml_tag: str, name_en_no_space: str) -> 
 
 def main() -> None:
     if len(sys.argv) < 2:
-        print("Usage: python generate_form.py <input.pdf> [output_dir] [--single-file]")
+        print("Usage: python generate_form.py <input.pdf> [--single-file] [--rules-pdf <pdf>]")
+        print("       python generate_form.py --schema <schema.json> [--single-file]")
         print()
-        print("Parses an ISO 20022 PDF specification and generates an interactive HTML form.")
-        print("The generated form is compatible with IE8+ and modern browsers.")
+        print("Mode 1: Parse PDF and generate form")
+        print("  input.pdf       Path to ISO 20022 usage guideline PDF")
+        print("  --rules-pdf     Path to CBPR+ combined rules PDF")
         print()
-        print("Arguments:")
-        print("  input.pdf     Path to ISO 20022 usage guideline PDF")
-        print("  output_dir    Output directory (default: output/)")
+        print("Mode 2: Generate form from pre-translated schema JSON")
+        print("  --schema        Path to schema JSON (with name_zh already filled)")
         print()
         print("Options:")
-        print("  --single-file  Also generate a single self-contained HTML file")
+        print("  --single-file   Also generate a single self-contained HTML file")
         sys.exit(1)
 
-    pdf_path = sys.argv[1]
     single_file = "--single-file" in sys.argv
-    rules_pdf = None
-    if "--rules-pdf" in sys.argv:
-        idx = sys.argv.index("--rules-pdf")
-        if idx + 1 < len(sys.argv):
-            rules_pdf = sys.argv[idx + 1]
 
-    if not os.path.exists(pdf_path):
-        print(f"ERROR: File not found: {pdf_path}", file=sys.stderr)
-        sys.exit(1)
+    # Mode 2: Generate from existing schema JSON
+    pdf_path = ""
+    if "--schema" in sys.argv:
+        idx = sys.argv.index("--schema")
+        if idx + 1 >= len(sys.argv):
+            print("ERROR: --schema requires a JSON file path", file=sys.stderr)
+            sys.exit(1)
+        schema_path = sys.argv[idx + 1]
+        if not os.path.exists(schema_path):
+            print(f"ERROR: File not found: {schema_path}", file=sys.stderr)
+            sys.exit(1)
+        print("=" * 60)
+        print("ISO 20022 Form Generator v5 (from schema JSON)")
+        print("=" * 60)
+        with open(schema_path, 'r', encoding='utf-8') as f:
+            schema = json.load(f)
+        print(f"Loaded schema: {schema_path}")
+    else:
+        # Mode 1: Parse PDF
+        pdf_path = sys.argv[1]
+        rules_pdf = None
+        if "--rules-pdf" in sys.argv:
+            idx = sys.argv.index("--rules-pdf")
+            if idx + 1 < len(sys.argv):
+                rules_pdf = sys.argv[idx + 1]
 
-    print("=" * 60)
-    print("ISO 20022 Form Generator v4 (IE8+ Compatible)")
-    print("=" * 60)
+        if not os.path.exists(pdf_path):
+            print(f"ERROR: File not found: {pdf_path}", file=sys.stderr)
+            sys.exit(1)
 
-    schema = parse_pdf(pdf_path)
+        print("=" * 60)
+        print("ISO 20022 Form Generator v5 (IE8+ Compatible)")
+        print("=" * 60)
 
-    if rules_pdf:
-        from parse_rules_pdf import parse_rules_pdf
-        rules = parse_rules_pdf(rules_pdf)
-        merge_rules(schema, rules)
-        print(f"Rules merged: {len(rules.get('fixed_values', []))} fixed values, "
-              f"{len(rules.get('business_rules', []))} business rules, "
-              f"{len(rules.get('choice_groups', []))} choice groups, "
-              f"{len(rules.get('removed_elements', []))} removed, "
-              f"{len(rules.get('mandatory_overrides', []))} mandatory overrides")
+        schema = parse_pdf(pdf_path)
+
+        if rules_pdf:
+            from parse_rules_pdf import parse_rules_pdf
+            rules = parse_rules_pdf(rules_pdf)
+            merge_rules(schema, rules)
+            print(f"Rules merged: {len(rules.get('fixed_values', []))} fixed values, "
+                  f"{len(rules.get('business_rules', []))} business rules, "
+                  f"{len(rules.get('choice_groups', []))} choice groups, "
+                  f"{len(rules.get('removed_elements', []))} removed, "
+                  f"{len(rules.get('mandatory_overrides', []))} mandatory overrides")
 
     if not schema.get('message_id'):
         print("ERROR: Could not detect message type from PDF.", file=sys.stderr)
         print("Please ensure the PDF is a valid ISO 20022 usage guideline.", file=sys.stderr)
         sys.exit(1)
 
+    # Apply default choice groups if none defined
+    if not schema.get("choice_groups"):
+        from form_rules import DEFAULT_CHOICE_GROUPS
+        schema["choice_groups"] = DEFAULT_CHOICE_GROUPS
+        _apply_choice_groups(schema, DEFAULT_CHOICE_GROUPS)
+
     message_id = schema["message_id"]
     safe_name = message_id.replace('.', '_')
+
+    # Detect variant from input PDF parent directory name or schema
+    variant = schema.get("variant", "") or _detect_variant(pdf_path, message_id)
+    if variant:
+        safe_name = safe_name + "_" + variant
+        schema["variant"] = variant
+        print(f"Variant detected: {variant}")
 
     output_dir = resolve_output_dir()
     os.makedirs(output_dir, exist_ok=True)
 
     # Save schema JSON
-    schema_path = os.path.join(output_dir, f"{message_id}.json")
+    schema_json_name = f"{message_id}_{variant}.json" if variant else f"{message_id}.json"
+    schema_path = os.path.join(output_dir, schema_json_name)
     with open(schema_path, 'w', encoding='utf-8') as f:
         json.dump(schema, f, ensure_ascii=False, indent=2, default=str)
     print(f"\nSchema saved: {schema_path}")
 
-    # Multi-file output (always)
+    # Multi-file output — flat structure, shared js/css
     form_dir = os.path.join(output_dir, "form")
     os.makedirs(form_dir, exist_ok=True)
     print("\nMulti-file output:")
-    write_multi_file(schema, form_dir)
+    write_multi_file(schema, form_dir, safe_name)
 
     # Single-file output (optional)
     if single_file:
@@ -501,7 +573,7 @@ def main() -> None:
         write_single_file(schema, single_path)
 
     print("\n" + "=" * 60)
-    print("Done. Open output/form/index.html in browser (IE8+ compatible).")
+    print(f"Done. Open output/form/{safe_name}.html in browser (IE8+ compatible).")
     if single_file:
         print(f"Single-file version: output/{safe_name}.html")
     print("=" * 60)

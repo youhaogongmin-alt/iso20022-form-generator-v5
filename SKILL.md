@@ -12,22 +12,65 @@ Use this skill to turn ISO 20022 usage guideline PDFs into interactive HTML form
 Run the generator from this skill directory:
 
 ```bash
-python scripts/generate_form.py <input.pdf> [--single-file]
+python scripts/generate_form.py dev/input/<msg>/usage_guideline.pdf \
+  --rules-pdf dev/input/<msg>/combined_rules.pdf
 ```
 
 The script writes:
 
-- `output/<message_id>.json` — extracted message schema.
-- `output/form/` — multi-file deployment (index.html + js/ + css/).
-- `output/<message_id>.html` — single-file offline form (with `--single-file` flag).
+- `output/<message_id>.json` — extracted message schema (name_zh empty, awaiting translation).
+- `output/form/<safe_name>.html` — per-message HTML form.
+- `output/form/js/` — shared app.js + per-message fieldMeta/appConfig.
+- `output/form/css/` — shared stylesheets.
+
+## Input File Organization
+
+```
+dev/input/
+├── pacs.008/
+│   ├── structure.pdf    ← CompactPDF (8列, 含Level+Type, parse_pdf.py解析)
+│   └── rules.pdf        ← PlainPDF (7列, 含Or+规则标记, parse_rules_pdf.py解析)
+├── pacs.008.stp/
+│   ├── structure.pdf
+│   └── rules.pdf
+├── pacs.009/
+│   ├── structure.pdf
+│   └── rules.pdf
+├── pacs.009.adv/
+│   ├── structure.pdf
+│   └── rules.pdf
+└── pacs.009.cov/
+    ├── structure.pdf
+    └── rules.pdf
+```
+
+- **structure.pdf** = MyStandards CompactPDF 导出 (~108页, 8列表格含字段层级/类型/长度)
+- **rules.pdf** = MyStandards PlainPDF 导出 (~366页, 7列表格含Or互斥/Usage Guidelines移除标记)
+- 目录名格式: `<msg_family>.<number>[.<variant>]`，variant 从目录名自动推断
 
 ## Workflow
 
+### Standard (with AI translation)
+
 1. Confirm the user provided an ISO 20022 usage guideline PDF, or ask for the PDF path.
-2. Run `scripts/generate_form.py` with the PDF path.
-3. Inspect stderr/stdout if parsing fails; non-ISO PDFs should be rejected.
-4. Open or reference `output/form/index.html` for the user.
-5. Use `--single-file` when the user needs a fully self-contained offline HTML.
+2. Run:
+   ```bash
+   python scripts/generate_form.py dev/input/<msg>/structure.pdf \
+     --rules-pdf dev/input/<msg>/rules.pdf
+   ```
+   This outputs `output/<message_id>.json` with `name_zh` fields empty.
+3. Read the schema JSON, fill in all empty `name_zh` fields with accurate Chinese translations based on ISO 20022 / SWIFT / CIPS standard terminology. Write the translated JSON back.
+4. Run `scripts/generate_form.py --schema output/<message_id>.json` to generate the form from the translated schema.
+5. Open or reference `output/form/<safe_name>.html` for the user.
+
+### Quick (skip translation)
+
+1. Run `scripts/generate_form.py dev/input/<msg>/structure.pdf --rules-pdf dev/input/<msg>/rules.pdf`
+2. Open `output/form/<safe_name>.html` (English names where Chinese is missing).
+
+### From pre-translated schema
+
+1. Run `scripts/generate_form.py --schema <schema.json> [--single-file]`
 
 ## Output Modes
 

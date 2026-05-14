@@ -33,12 +33,15 @@ from form_rules import (
 # ==================== Public API ====================
 
 
-def generate_html(schema: dict) -> str:
+def generate_html(schema: dict, safe_name: str = "") -> str:
     """Generate complete HTML form page from parsed schema.
 
     Returns a full HTML document string referencing external CSS/JS files.
+    safe_name is used for per-message JS file references (e.g. 'pacs_008_001_08').
     """
     message_id = schema.get("message_id", "Unknown")
+    if not safe_name:
+        safe_name = message_id.replace('.', '_')
     message_name_en = schema.get("message_name_en", "Unknown Message")
     message_name_zh = schema.get("message_name_zh", message_name_en)
     collection_name = schema.get("collection_name", "")
@@ -88,7 +91,7 @@ def generate_html(schema: dict) -> str:
         _html_progress_template_search(),
         _html_form_sections(app_hdr_html, document_html),
         _html_json_panel(esc_msg_id),
-        _html_footer(at_least_one_js + "\n" + choice_groups_js),
+        _html_footer(at_least_one_js + "\n" + choice_groups_js, safe_name),
     ]
     return "\n".join(parts)
 
@@ -635,7 +638,7 @@ def _html_json_panel(message_id: str) -> str:
         '  </div>\n'
     )
 
-def _html_footer(at_least_one_js: str) -> str:
+def _html_footer(at_least_one_js: str, safe_name: str = "") -> str:
     """Return modals, toast, quick panel, scripts, and closing tags."""
     return (
         '\n'
@@ -708,8 +711,8 @@ def _html_footer(at_least_one_js: str) -> str:
         '  <!-- Scripts -->\n'
         '  <script src="js/vendor/jquery-1.12.4.min.js"></script>\n'
         '  <script src="js/vendor/bootstrap.min.js"></script>\n'
-        '  <script src="js/fieldMeta.js"></script>\n'
-        '  <script src="js/appConfig.js"></script>\n'
+        f'  <script src="js/{safe_name}_fieldMeta.js"></script>\n'
+        f'  <script src="js/{safe_name}_appConfig.js"></script>\n'
         '  <script src="js/app.js"></script>\n'
         '</body>\n'
         '</html>\n'
