@@ -477,6 +477,19 @@ def _render_repeat_group(
     max_disp = _mult_display(mult_max)
     repeat_id = f"repeat_{form_name}"
 
+    # When mult_min=0, start empty (no default item)
+    if mult_min == 0:
+        items_html = ""
+    else:
+        items_html = (
+            f'    <div class="repeat-item" data-index="1">\n'
+            f'      <span class="repeat-index">第1条</span>\n'
+            f'      <button type="button" class="btn btn-xs btn-danger btn-repeat-remove">'
+            f"×</button>\n"
+            f"      {children_html}\n"
+            f"    </div>\n"
+        )
+
     return (
         f'<div class="repeat-group panel panel-default" id="{repeat_id}" '
         f'data-repeat-group="{repeat_id}" data-min="{mult_min}" data-max="{mult_max}">\n'
@@ -487,12 +500,7 @@ def _render_repeat_group(
         f"+ 添加</button>\n"
         f"  </div>\n"
         f'  <div class="panel-body repeat-items" id="{repeat_id}_items">\n'
-        f'    <div class="repeat-item" data-index="1">\n'
-        f'      <span class="repeat-index">第1条</span>\n'
-        f'      <button type="button" class="btn btn-xs btn-danger btn-repeat-remove">'
-        f"×</button>\n"
-        f"      {children_html}\n"
-        f"    </div>\n"
+        f"    {items_html}"
         f"  </div>\n"
         f"</div>"
     )
@@ -540,6 +548,19 @@ def _render_repeat_leaf(
         f"      </div>"
     )
 
+    # When mult_min=0, start empty (no default item)
+    if mult_min == 0:
+        items_html = ""
+    else:
+        items_html = (
+            f'    <div class="repeat-item" data-index="1">\n'
+            f'      <span class="repeat-index">第1条</span>\n'
+            f'      <button type="button" class="btn btn-xs btn-danger btn-repeat-remove">'
+            f"×</button>\n"
+            f"      {item_html}\n"
+            f"    </div>\n"
+        )
+
     return (
         f'<div class="repeat-group repeat-leaf panel panel-default" id="{repeat_id}" '
         f'data-repeat-group="{repeat_id}" data-min="{mult_min}" data-max="{mult_max}">\n'
@@ -550,12 +571,7 @@ def _render_repeat_leaf(
         f"+ 添加</button>\n"
         f"  </div>\n"
         f'  <div class="panel-body repeat-items" id="{repeat_id}_items">\n'
-        f'    <div class="repeat-item" data-index="1">\n'
-        f'      <span class="repeat-index">第1条</span>\n'
-        f'      <button type="button" class="btn btn-xs btn-danger btn-repeat-remove">'
-        f"×</button>\n"
-        f"      {item_html}\n"
-        f"    </div>\n"
+        f"    {items_html}"
         f"  </div>\n"
         f"</div>"
     )

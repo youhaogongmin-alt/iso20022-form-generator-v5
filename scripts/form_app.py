@@ -1438,8 +1438,13 @@ function addRepeatItem(groupId) {
   } else if ($items.length > 0) {
     $newItem = $items.first().clone();
     $newItem.find("input, select, textarea").val("");
+    // Save as template for future adds
+    repeatTemplates[groupId] = $newItem.clone();
   } else {
-    return;
+    // Empty container (min=0): build a default item from the group's inner structure
+    $newItem = buildDefaultRepeatItem($group);
+    if (!$newItem) return;
+    repeatTemplates[groupId] = $newItem.clone();
   }
 
   $newItem.find(".has-error").removeClass("has-error");
@@ -1448,6 +1453,26 @@ function addRepeatItem(groupId) {
   $group.children(".repeat-items").append($newItem);
   renumberRepeatItems($group);
   updateRepeatAddState($group);
+  updateRepeatRemoveState($group);
+}
+
+function buildDefaultRepeatItem($group) {
+  // For repeat-leaf groups, build a simple input item
+  if ($group.hasClass("repeat-leaf")) {
+    var groupId = $group.attr("data-repeat-group");
+    // Extract form-name from group id: "repeat_DOC_..._AdrLine" -> "DOC_..._AdrLine"
+    var formName = groupId.replace(/^repeat_/, "");
+    var html = '<div class="repeat-item" data-index="1">' +
+      '<span class="repeat-index">第1条</span>' +
+      '<button type="button" class="btn btn-xs btn-danger btn-repeat-remove">×</button>' +
+      '<div class="field-group field-editable" data-form-name="' + escapeHtml(formName) + '" data-required="false">' +
+      '<input type="text" class="form-control" name="' + escapeHtml(formName) + '" data-form-name="' + escapeHtml(formName) + '">' +
+      '<div class="error-msg"></div></div></div>';
+    return $(html);
+  }
+  // For container repeat groups, we need the inner template
+  // This case is handled by saveRepeatTemplate during component init
+  return null;
 }
 
 function removeRepeatItem(btn) {
@@ -1863,6 +1888,14 @@ function buildRepeatGroupHtml(f, children, fieldPath, prefix, multMin, multMax, 
   var repeatId = "repeat_" + fieldPath;
   var maxDisp = multMax >= 9999 ? "*" : String(multMax);
   var innerHtml = buildComponentHtml(children, fieldPath, prefix, overrides);
+  var itemsHtml = "";
+  if (multMin > 0) {
+    itemsHtml = '    <div class="repeat-item" data-index="1">\n' +
+      '      <span class="repeat-index">第1条</span>\n' +
+      '      <button type="button" class="btn btn-xs btn-danger btn-repeat-remove">×</button>\n' +
+      '      ' + innerHtml + '\n' +
+      '    </div>\n';
+  }
   return '<div class="repeat-group panel panel-default" id="' + repeatId + '" ' +
     'data-repeat-group="' + repeatId + '" data-min="' + multMin + '" data-max="' + multMax + '">\n' +
     '  <div class="panel-heading">\n' +
@@ -1871,11 +1904,7 @@ function buildRepeatGroupHtml(f, children, fieldPath, prefix, multMin, multMax, 
     '    <button type="button" class="btn btn-xs btn-primary btn-repeat-add pull-right">+ 添加</button>\n' +
     '  </div>\n' +
     '  <div class="panel-body repeat-items" id="' + repeatId + '_items">\n' +
-    '    <div class="repeat-item" data-index="1">\n' +
-    '      <span class="repeat-index">第1条</span>\n' +
-    '      <button type="button" class="btn btn-xs btn-danger btn-repeat-remove">×</button>\n' +
-    '      ' + innerHtml + '\n' +
-    '    </div>\n' +
+    itemsHtml +
     '  </div>\n' +
     '</div>';
 }
@@ -1885,6 +1914,12 @@ function buildLeafHtml(f, fieldPath, prefix) {
   var isoPath = buildIsoPath(prefix, fieldPath);
   var multMin = f.multMin || 0;
   var multMax = f.multMax || 1;
+
+  // Repeatable leaf (e.g., AdrLine [0..2]) → render as repeat-leaf
+  if (multMax > 1 && !f.isFixed) {
+    return buildRepeatLeafHtml(f, fieldPath, prefix, multMin, multMax);
+  }
+
   var isRequired = multMin >= 1;
   var stateClass = isRequired ? "field-required" : "field-editable";
   if (f.isFixed) stateClass = "field-readonly";
@@ -1911,6 +1946,46 @@ function buildLeafHtml(f, fieldPath, prefix) {
     '  ' + inputHtml + '\n' +
     '  ' + hintHtml + '\n' +
     '  <div class="error-msg"></div>\n' +
+    '</div>';
+}
+
+function buildRepeatLeafHtml(f, fieldPath, prefix, multMin, multMax) {
+  var repeatId = "repeat_" + fieldPath;
+  var formName = fieldPath;
+  var isoPath = buildIsoPath(prefix, fieldPath);
+  var maxDisp = multMax >= 9999 ? "*" : String(multMax);
+  var inputHtml = buildInputHtml(f, formName, prefix, isoPath);
+  var hintHtml = "";
+  if (f.pattern) {
+    hintHtml = '<div class="hint">格式 / Format: ' + escapeHtml(f.pattern) + '</div>';
+  } else if (f.maxLen && f.maxLen > 0) {
+    hintHtml = '<div class="hint">最大长度 / Max: ' + f.maxLen + '</div>';
+  }
+  var itemInner = '<div class="field-group field-editable" ' +
+    'data-iso-path="' + escapeHtml(isoPath) + '" ' +
+    'data-form-name="' + escapeHtml(formName) + '" data-required="false">\n' +
+    '        ' + inputHtml + '\n' +
+    '        ' + hintHtml + '\n' +
+    '        <div class="error-msg"></div>\n' +
+    '      </div>';
+  var itemsHtml = "";
+  if (multMin > 0) {
+    itemsHtml = '    <div class="repeat-item" data-index="1">\n' +
+      '      <span class="repeat-index">第1条</span>\n' +
+      '      <button type="button" class="btn btn-xs btn-danger btn-repeat-remove">×</button>\n' +
+      '      ' + itemInner + '\n' +
+      '    </div>\n';
+  }
+  return '<div class="repeat-group repeat-leaf panel panel-default" id="' + repeatId + '" ' +
+    'data-repeat-group="' + repeatId + '" data-min="' + multMin + '" data-max="' + multMax + '">\n' +
+    '  <div class="panel-heading">\n' +
+    '    <span>' + escapeHtml(f.nameZh || "") + ' / ' + escapeHtml(f.nameEn || "") + '</span>\n' +
+    '    <span class="label label-default">[' + multMin + '..' + maxDisp + ']</span>\n' +
+    '    <button type="button" class="btn btn-xs btn-primary btn-repeat-add pull-right">+ 添加</button>\n' +
+    '  </div>\n' +
+    '  <div class="panel-body repeat-items" id="' + repeatId + '_items">\n' +
+    itemsHtml +
+    '  </div>\n' +
     '</div>';
 }
 
