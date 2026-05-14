@@ -44,18 +44,30 @@ dev/input/
 
 ### 标准流程（含 AI 翻译）
 
-1. 确认用户提供了 PDF 文件，或询问报文类型
-2. 解析 PDF 生成 schema JSON（name_zh 为空）:
+1. 用户提供 PDF 文件路径（可以是原始文件名）
+2. **归档 PDF**：从文件名解析报文类型和变体，自动创建目录并复制重命名:
+   - 文件名格式: `CBPRPlus_SR2026_(Combined)_CBPRPlus-<msg_id>_[<variant>_]<name>_<date>.pdf`
+   - 解析规则:
+     - `pacs_008_001_08_FIToFICustomerCreditTransfer` → msg=`pacs.008`, variant=无
+     - `pacs_008_001_08_STP_FIToFICustomerCreditTransfer` → msg=`pacs.008`, variant=`stp`
+     - `pacs_009_001_08_ADV_FinancialInstitutionCreditTransfer` → msg=`pacs.009`, variant=`adv`
+     - `pacs_009_001_08_COV_FinancialInstitutionCreditTransfer` → msg=`pacs.009`, variant=`cov`
+   - 已知变体关键词: `STP`, `ADV`, `COV`, `MultipleCharges`
+   - 目标目录: `dev/input/<msg_family>.<number>[.<variant>]/`
+   - CompactPDF 来源 → 命名为 `structure.pdf`
+   - PlainPDF 来源 → 命名为 `rules.pdf`
+   - 判断方式: 用 pdfplumber 打开第一个表格页，8列=CompactPDF(structure)，7列=PlainPDF(rules)
+3. 解析 PDF 生成 schema JSON（name_zh 为空）:
    ```bash
    python scripts/generate_form.py dev/input/<msg>/structure.pdf \
      --rules-pdf dev/input/<msg>/rules.pdf
    ```
-3. 读取 `output/<message_id>.json`，补全所有空的 `name_zh` 字段（基于 ISO 20022 / SWIFT / CIPS 标准术语），写回 JSON
-4. 从已翻译的 schema 生成表单:
+4. 读取 `output/<message_id>.json`，补全所有空的 `name_zh` 字段（基于 ISO 20022 / SWIFT / CIPS 标准术语），写回 JSON
+5. 从已翻译的 schema 生成表单:
    ```bash
    python scripts/generate_form.py --schema output/<message_id>.json
    ```
-5. 打开 `output/form/<safe_name>.html` 验证
+6. 打开 `output/form/<safe_name>.html` 验证
 
 ### 快速流程（跳过翻译）
 
