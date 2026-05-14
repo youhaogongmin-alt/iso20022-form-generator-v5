@@ -1,7 +1,7 @@
 (function($, window, undefined) {
 "use strict";
 
-var MESSAGE_ID = "camt.029.001.09";
+var MESSAGE_ID = "pacs.008.001.08";
 var DRAFT_KEY = "iso20022-draft-" + MESSAGE_ID;
 var QUICK_DRAFT_KEY = "iso20022-quick-draft-" + MESSAGE_ID;
 
