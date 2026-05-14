@@ -253,6 +253,19 @@ FIELD_STATE_OVERRIDES = []
 # F04 (CR 3020): Forbidden Service Level Codes for CBPR+ (per GPI rule on page 23)
 FORBIDDEN_SVC_LVL_CODES = {'G002', 'G003', 'G004', 'G005', 'G006', 'G007', 'G009'}
 
+# ==================== Component Signatures (for lazy rendering) ====================
+# Child tag sets that identify reusable ISO 20022 datatype components.
+# Used by field_renderer.detect_component_type() to emit placeholder divs.
+
+COMPONENT_SIGNATURES = {
+    'Account': {'Id', 'Tp', 'Ccy', 'Nm', 'Prxy'},
+    'FinInstnId': {'BICFI', 'ClrSysMmbId', 'LEI', 'Nm', 'PstlAdr'},
+    'PartyIdentification': {'Nm', 'PstlAdr', 'Id', 'CtryOfRes'},
+}
+
+# Ordered by implementation phase (smallest first)
+COMPONENT_PHASE_ORDER = ['Account', 'FinInstnId', 'PartyIdentification']
+
 # F07 (CR 3072): Fields that become mandatory when parent section has value
 CONDITIONAL_MANDATORY = {
     # When Strd exists, CdtrRefInf/Ref is mandatory

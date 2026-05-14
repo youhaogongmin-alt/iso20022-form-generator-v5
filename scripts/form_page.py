@@ -16,9 +16,10 @@ from __future__ import annotations
 import html as html_mod
 import json
 
-from field_renderer import render_field_html
+from field_renderer import detect_component_type, render_field_html
 from form_rules import (
     BUSINESS_RULES,
+    COMPONENT_SIGNATURES,
     FIELD_STATE_OVERRIDES,
     FIELD_STATE_STYLES,
     QUICK_FILL_FIELDS,
@@ -54,7 +55,7 @@ def generate_html(schema: dict) -> str:
         document_html += render_field_html(field, "DOC", "")
 
     # --- Collect field metadata ---
-    all_fields = _collect_field_metadata(app_hdr_fields, document_fields)
+    all_fields, _component_instances = _collect_field_metadata(app_hdr_fields, document_fields)
 
     # --- Collect at-least-one groups ---
     at_least_one_groups = _collect_at_least_one_groups(app_hdr_fields, document_fields)
@@ -95,12 +96,34 @@ def generate_html(schema: dict) -> str:
 def generate_field_meta_js(schema: dict) -> str:
     """Generate the contents of fieldMeta.js for external file output.
 
-    Returns a string suitable for writing directly to js/fieldMeta.js.
+    Returns a string with 3 sections:
+    - window.COMPONENT_TEMPLATES: template definitions for reusable components
+    - window.COMPONENT_INSTANCES: instance mappings (type + pathPrefix)
+    - window.FIELD_META: independent (non-component) field metadata
     """
     app_hdr_fields = schema.get("app_hdr_fields", [])
     document_fields = schema.get("document_fields", [])
-    all_fields = _collect_field_metadata(app_hdr_fields, document_fields)
-    return "window.FIELD_META = " + json.dumps(all_fields, ensure_ascii=False) + ";\n"
+    independent_fields, component_instances = _collect_field_metadata(
+        app_hdr_fields, document_fields
+    )
+
+    # Generate component templates from schema
+    templates = _build_component_templates(schema)
+
+    parts = []
+    parts.append(
+        "window.COMPONENT_TEMPLATES = "
+        + json.dumps(templates, ensure_ascii=False, indent=2) + ";\n"
+    )
+    parts.append(
+        "window.COMPONENT_INSTANCES = "
+        + json.dumps(component_instances, ensure_ascii=False) + ";\n"
+    )
+    parts.append(
+        "window.FIELD_META = "
+        + json.dumps(independent_fields, ensure_ascii=False) + ";\n"
+    )
+    return "\n".join(parts)
 
 
 def generate_app_config_js(schema: dict) -> str:
@@ -131,12 +154,115 @@ def generate_app_config_js(schema: dict) -> str:
     )
 
 
+# ==================== Component Template Generation ====================
+
+
+def _build_component_templates(schema: dict) -> dict:
+    """Build component template definitions from the first instance of each type in schema.
+
+    Walks the schema tree, finds the first field matching each component signature,
+    and extracts its child structure as a reusable template.
+    """
+    templates = {}
+    document_fields = schema.get("document_fields", [])
+
+    def find_first_instance(fields: list, comp_type: str, signature: set) -> dict | None:
+        for f in fields:
+            children = f.get("children", [])
+            if children:
+                child_tags = {c.get("xml_tag", "") for c in children}
+                if signature.issubset(child_tags):
+                    return f
+                result = find_first_instance(children, comp_type, signature)
+                if result:
+                    return result
+        return None
+
+    def field_to_template(f: dict) -> dict:
+        """Convert a schema field to a template node."""
+        node = {
+            "tag": f.get("xml_tag", ""),
+            "nameZh": f.get("name_zh", f.get("name_en", "")),
+            "nameEn": f.get("name_en", ""),
+        }
+        children = f.get("children", [])
+        type_code = f.get("type_code", "text")
+        if force_date_type(f):
+            type_code = "date"
+
+        if children:
+            node["type"] = "container"
+            node["children"] = [field_to_template(c) for c in children
+                                if not should_remove_field(c, f.get("xml_tag", ""))
+                                and not c.get("is_attribute", False)]
+        else:
+            node["type"] = type_code if type_code else "text"
+            if f.get("max_length", 0) > 0:
+                node["maxLen"] = f["max_length"]
+            if f.get("regex_pattern", ""):
+                node["pattern"] = f["regex_pattern"]
+            if f.get("code_values"):
+                node["codeValues"] = f["code_values"]
+            if f.get("is_fixed", False):
+                node["isFixed"] = True
+                node["fixedValue"] = f.get("fixed_value", "")
+
+        mult_min = f.get("mult_min", 0)
+        mult_max = f.get("mult_max", 1)
+        if mult_min > 0:
+            node["multMin"] = mult_min
+        if mult_max > 1:
+            node["multMax"] = mult_max
+
+        return node
+
+    for comp_type, signature in COMPONENT_SIGNATURES.items():
+        instance = find_first_instance(document_fields, comp_type, signature)
+        if not instance:
+            continue
+        children = instance.get("children", [])
+        template_fields = []
+        leaf_count = 0
+        for c in children:
+            if should_remove_field(c, instance.get("xml_tag", "")):
+                continue
+            if c.get("is_attribute", False):
+                continue
+            tpl_node = field_to_template(c)
+            template_fields.append(tpl_node)
+            leaf_count += _count_template_leaves(tpl_node)
+
+        templates[comp_type] = {
+            "leafCount": leaf_count,
+            "fields": template_fields,
+        }
+
+    return templates
+
+
+def _count_template_leaves(node: dict) -> int:
+    """Count leaf fields in a template node recursively."""
+    children = node.get("children", [])
+    if not children:
+        return 1
+    total = 0
+    for c in children:
+        total += _count_template_leaves(c)
+    return total
+
+
 # ==================== Field Metadata Collection ====================
 
 
-def _collect_field_metadata(app_hdr_fields: list, document_fields: list) -> list:
-    """Walk field trees and collect metadata for every leaf field."""
-    all_fields: list[dict] = []
+def _collect_field_metadata(app_hdr_fields: list, document_fields: list) -> tuple:
+    """Walk field trees and collect metadata.
+
+    Returns (independent_fields, component_instances) where:
+    - independent_fields: flat list of field metadata dicts (non-component fields)
+    - component_instances: list of component instance dicts for lazy rendering
+    """
+    independent_fields: list[dict] = []
+    component_instances: list[dict] = []
 
     def build_iso_path(prefix: str, cur_path: str) -> str:
         dot_path = cur_path.replace("_", ".")
@@ -167,7 +293,22 @@ def _collect_field_metadata(app_hdr_fields: list, document_fields: list) -> list
             if force_date_type(f):
                 type_code = "date"
 
-            all_fields.append({
+            # Check if this is a component instance (lazy rendered)
+            comp_type = detect_component_type(f) if f.get("children") else None
+            if comp_type:
+                component_instances.append({
+                    "type": comp_type,
+                    "pathPrefix": form_name,
+                    "isoPath": iso_path,
+                    "nameZh": f.get("name_zh", f.get("name_en", "")),
+                    "nameEn": f.get("name_en", ""),
+                    "multMin": mult_min,
+                    "multMax": f.get("mult_max", 1),
+                })
+                # Skip children — they'll be rendered by JS component template
+                continue
+
+            independent_fields.append({
                 "xml_tag": tag,
                 "name_en": f.get("name_en", ""),
                 "name_zh": f.get("name_zh", ""),
@@ -190,7 +331,7 @@ def _collect_field_metadata(app_hdr_fields: list, document_fields: list) -> list
 
     collect(app_hdr_fields, "AH")
     collect(document_fields, "DOC")
-    return all_fields
+    return independent_fields, component_instances
 
 
 # ==================== At-Least-One Groups ====================

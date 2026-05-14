@@ -10,10 +10,36 @@ from __future__ import annotations
 import html
 
 from form_rules import (
+    COMPONENT_SIGNATURES,
     force_date_type,
     is_proxy_tp_field,
     should_remove_field,
 )
+
+
+# ==================== Component Detection ====================
+
+# Which component types are currently enabled for lazy rendering.
+# Start with Account only (Phase 2), expand later.
+LAZY_COMPONENTS_ENABLED = {'Account'}
+
+
+def detect_component_type(field: dict) -> str | None:
+    """Detect if a container field matches a known reusable component type.
+
+    Returns the component type name or None.
+    Only returns a match if the component is enabled for lazy rendering.
+    """
+    children = field.get("children", [])
+    if not children:
+        return None
+    child_tags = {c.get("xml_tag", "") for c in children}
+    for comp_type, signature in COMPONENT_SIGNATURES.items():
+        if comp_type not in LAZY_COMPONENTS_ENABLED:
+            continue
+        if signature.issubset(child_tags):
+            return comp_type
+    return None
 
 
 # ==================== Public API ====================
@@ -366,6 +392,13 @@ def _render_container(
 
     parent_tag = field_path.split("_")[-2] if "_" in field_path else ""
 
+    # --- Component detection: emit placeholder for lazy rendering ---
+    comp_type = detect_component_type(field)
+    if comp_type and mult_max <= 1:
+        return _render_component_placeholder(
+            comp_type, form_name, name_en, name_zh, mult_min, is_fixed, fixed_value,
+        )
+
     # Render children
     children_html = _render_children(children, prefix, field_path, xml_tag)
 
@@ -394,6 +427,39 @@ def _render_container(
         f"  </div>\n"
         f'  <div id="{collapse_id}" class="panel-body collapse {collapsed_in}">\n'
         f"    {children_html}\n"
+        f"  </div>\n"
+        f"</div>"
+    )
+
+
+def _render_component_placeholder(
+    comp_type: str,
+    form_name: str,
+    name_en: str,
+    name_zh: str,
+    mult_min: int,
+    is_fixed: bool,
+    fixed_value: str,
+) -> str:
+    """Render a component instance as a collapsed placeholder panel for lazy rendering."""
+    badge = _badge_html(mult_min, is_fixed, fixed_value)
+    collapse_id = f"collapse_{form_name}"
+
+    return (
+        f'<div class="panel panel-default">\n'
+        f'  <div class="panel-heading collapsed" data-toggle="collapse" '
+        f'data-target="#{collapse_id}">\n'
+        f'    <h4 class="panel-title">\n'
+        f"      {html.escape(name_zh)} / {html.escape(name_en)} {badge}\n"
+        f'      <span class="toggle-icon">&#9660;</span>\n'
+        f"    </h4>\n"
+        f"  </div>\n"
+        f'  <div id="{collapse_id}" class="panel-body collapse"\n'
+        f'       data-component="{html.escape(comp_type)}"\n'
+        f'       data-path-prefix="{html.escape(form_name)}"\n'
+        f'       data-rendered="false">\n'
+        f'    <div class="component-placeholder text-muted">'
+        f'展开加载 / Expand to load</div>\n'
         f"  </div>\n"
         f"</div>"
     )
