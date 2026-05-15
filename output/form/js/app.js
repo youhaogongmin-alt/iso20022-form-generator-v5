@@ -1,7 +1,16 @@
 (function($, window, undefined) {
 "use strict";
 
-var MESSAGE_ID = "camt.029.001.09";
+function getCurrentMessageId() {
+  var config = window.ISO20022_APP_CONFIG || {};
+  var messages = config.messages || {};
+  for (var key in messages) {
+    if (messages.hasOwnProperty(key)) return key;
+  }
+  return "unknown";
+}
+
+var MESSAGE_ID = getCurrentMessageId();
 var DRAFT_KEY = "iso20022-draft-" + MESSAGE_ID;
 var QUICK_DRAFT_KEY = "iso20022-quick-draft-" + MESSAGE_ID;
 
@@ -2517,9 +2526,15 @@ $(document).ready(function() {
     var oldValue = formData[name] || "";
     formData[name] = value;
 
-    // Emit change event via API
-    if (window.ISO20022_FORM_API && window.ISO20022_FORM_API._emit) {
-      window.ISO20022_FORM_API._emit("change", {field: name, value: value, oldValue: oldValue});
+    // Emit change event via the API instance owning this field.
+    var eventApi = null;
+    if (window.ISO20022_FORM_API_FACTORY && window.ISO20022_FORM_API_FACTORY.findByElement) {
+      eventApi = window.ISO20022_FORM_API_FACTORY.findByElement(this);
+    } else {
+      eventApi = window.ISO20022_FORM_API;
+    }
+    if (eventApi && eventApi._emit) {
+      eventApi._emit("change", {field: name, value: value, oldValue: oldValue});
     }
 
     // Validate
@@ -2573,20 +2588,9 @@ window.APP = {
 })(jQuery, window);
 
 
-// ===== ISO20022_FORM_API (ES5 + jQuery, IE8+ compatible) =====
-(function($, window) {
+// ===== ISO20022_FORM_API_FACTORY (ES5 + jQuery, IE8+ compatible) =====
+(function($, window, document) {
   'use strict';
-
-  var appConfig = window.ISO20022_APP_CONFIG || {};
-  var MESSAGE_ID = (function() {
-    var msgs = appConfig.messages || {};
-    for (var k in msgs) { if (msgs.hasOwnProperty(k)) return k; }
-    return 'unknown';
-  })();
-  var fieldMeta = window.FIELD_META || [];
-  var apiEvents = {};
-  var formMode = 'create';
-  var initialValues = {};
 
   function trim(s) {
     return String(s == null ? '' : s).replace(/^\s+|\s+$/g, '');
@@ -2599,61 +2603,6 @@ window.APP = {
       .replace(/_/g, '.')
       .replace(/\.+/g, '.')
       .replace(/^\.+|\.+$/g, '');
-  }
-
-  function getRuntimeConfig() {
-    var messages = appConfig.messages || {};
-    return messages[MESSAGE_ID] || messages['default'] || {};
-  }
-
-  function getAliasTarget(key) {
-    var cfg = getRuntimeConfig();
-    var aliases = cfg.fieldAliases || {};
-    var mappings = cfg.valueMappings || {};
-    return aliases[key] || mappings[key] || null;
-  }
-
-  function findFieldMetaByKey(key) {
-    var normalized = normalizeIsoPath(key);
-    for (var i = 0; i < fieldMeta.length; i++) {
-      var meta = fieldMeta[i];
-      if (meta.form_name === key || meta.iso_path === key ||
-          normalizeIsoPath(meta.iso_path) === normalized) {
-        return meta;
-      }
-    }
-    return null;
-  }
-
-  function resolveFieldElement(reference) {
-    if (!reference) return null;
-    if (reference.nodeType === 1) return reference;
-    if (reference.jquery) return reference[0] || null;
-
-    var key = String(reference);
-    var alias = getAliasTarget(key);
-    if (alias) {
-      if (typeof alias === 'string') return resolveFieldElement(alias);
-      if (alias.name) return resolveFieldElement(alias.name);
-      if (alias.isoPath) return resolveFieldElement(alias.isoPath);
-      if (alias.target) return resolveFieldElement(alias.target);
-    }
-
-    if (key.indexOf('[name="') === 0 || key.indexOf("[name='") === 0) {
-      key = key.substring(7, key.length - 2);
-    }
-
-    var meta = findFieldMetaByKey(key);
-    if (meta && meta.form_name) {
-      var el = document.getElementById(meta.form_name);
-      if (el) return el;
-    }
-
-    var el2 = document.getElementById(key);
-    if (el2) return el2;
-
-    var $found = $('[name="' + key + '"]');
-    return $found.length ? $found[0] : null;
   }
 
   function escapeXml(value) {
@@ -2682,18 +2631,6 @@ window.APP = {
     }
   }
 
-  function buildJson() {
-    var json = { AppHdr: {}, Document: {} };
-    $('[data-iso-path]').each(function() {
-      var el = this;
-      if (!el.name || !el.value || trim(el.value) === '') return;
-      var path = $(el).attr('data-iso-path') || '';
-      if (path.indexOf('AppHdr') === 0) assignNested(json.AppHdr, path, el.value);
-      else if (path.indexOf('Document') === 0) assignNested(json.Document, path, el.value);
-    });
-    return json;
-  }
-
   function objectToXml(obj, tagName) {
     var xml = '';
     if (typeof obj !== 'object' || obj == null) {
@@ -2716,329 +2653,478 @@ window.APP = {
     return xml;
   }
 
-  // --- Event System ---
+  function getData(dataKey) {
+    var dataStore = window.ISO20022_FORM_DATA || {};
+    return dataStore[dataKey] || {};
+  }
 
-  function emitEvent(type, payload) {
-    var handlers = apiEvents[type] || [];
-    var event = $.extend({ type: type, messageId: MESSAGE_ID, mode: formMode }, payload || {});
-    for (var i = 0; i < handlers.length; i++) {
-      try { handlers[i](event); } catch (e) {}
+  function contains(root, el) {
+    if (!root || !el) return false;
+    if (root === document) return true;
+    if (root === el) return true;
+    return $.contains(root, el);
+  }
+
+  function firstMessageId(config) {
+    var messages = config.messages || {};
+    for (var k in messages) {
+      if (messages.hasOwnProperty(k)) return k;
     }
-    return event;
+    return 'unknown';
   }
 
-  function onEvent(type, handler) {
-    if (!apiEvents[type]) apiEvents[type] = [];
-    apiEvents[type].push(handler);
-    return function() { offEvent(type, handler); };
-  }
-
-  function offEvent(type, handler) {
-    var handlers = apiEvents[type];
-    if (!handlers) return;
-    for (var i = handlers.length - 1; i >= 0; i--) {
-      if (handlers[i] === handler) handlers.splice(i, 1);
-    }
-  }
-
-  // --- Public API Methods ---
-
-  function setField(key, value, options) {
-    var el = resolveFieldElement(key);
-    if (!el) return { ok: false, key: key, error: 'field not found' };
-    var oldValue = el.value;
-    $(el).val(value == null ? '' : String(value)).trigger('change');
-    if (!options || options.emit !== false) {
-      emitEvent('change', { field: el.name, value: el.value, oldValue: oldValue, element: el });
-    }
-    return {
-      ok: true,
-      name: el.name,
-      isoPath: $(el).attr('data-iso-path') || '',
-      value: el.value,
-      element: el
-    };
-  }
-
-  function getField(key) {
-    var el = resolveFieldElement(key);
-    if (!el) return null;
-    return {
-      name: el.name,
-      isoPath: $(el).attr('data-iso-path') || '',
-      value: el.value,
-      element: el,
-      meta: findFieldMetaByKey(el.name)
-    };
-  }
-
-  function setValues(values, options) {
-    var results = [];
-    if (!values) return results;
-    for (var key in values) {
-      if (values.hasOwnProperty(key)) {
-        results.push(setField(key, values[key], { emit: options ? options.emit : true }));
+  function findApiByElement(el) {
+    var apis = window.ISO20022_FORM_APIS || {};
+    for (var key in apis) {
+      if (apis.hasOwnProperty(key) && apis[key] &&
+          apis[key].containsElement && apis[key].containsElement(el)) {
+        return apis[key];
       }
     }
-    return results;
+    return window.ISO20022_FORM_API || null;
   }
 
-  function getValues(options) {
-    var includeEmpty = options && options.includeEmpty;
-    var out = {};
-    $('[data-form-name]').each(function() {
-      if (this.name && (includeEmpty || this.value !== '')) {
-        out[this.name] = this.value;
-      }
-    });
-    return out;
-  }
+  function createApi(options) {
+    options = options || {};
+    var dataKey = options.dataKey || 'default';
+    var data = getData(dataKey);
+    var appConfig = data.appConfig || window.ISO20022_APP_CONFIG || {};
+    var MESSAGE_ID = options.messageId || firstMessageId(appConfig);
+    var fieldMeta = data.fieldMeta || window.FIELD_META || [];
+    var apiEvents = {};
+    var formMode = 'create';
+    var initialValues = {};
+    var rootId = options.rootId || '';
 
-  function getIsoPathValues(options) {
-    var includeEmpty = options && options.includeEmpty;
-    var out = {};
-    $('[data-iso-path]').each(function() {
-      var path = $(this).attr('data-iso-path');
-      if (path && this.name && (includeEmpty || this.value !== '')) {
-        out[path] = this.value;
-      }
-    });
-    return out;
-  }
-
-  function clearValues(options) {
-    $('[data-form-name]').each(function() {
-      if (!this.readOnly && !this.disabled) {
-        $(this).val('').trigger('change');
-      }
-    });
-    emitEvent('clear', {});
-  }
-
-  function loadJson(json) {
-    if (!json) return;
-    if (json.AppHdr) importNested(json.AppHdr, 'AH_AppHdr');
-    if (json.Document) {
-      var docKey = null;
-      for (var k in json.Document) { if (json.Document.hasOwnProperty(k)) { docKey = k; break; } }
-      if (docKey) importNested(json.Document[docKey], 'DOC_' + docKey);
+    function getRoot() {
+      var root = rootId ? document.getElementById(rootId) : null;
+      return root || document;
     }
-    snapshotInitialValues();
-    emitEvent('load', { json: json, fieldCount: $('[data-form-name]').length });
-  }
 
-  function importNested(obj, prefix) {
-    for (var key in obj) {
-      if (!obj.hasOwnProperty(key)) continue;
-      var value = obj[key];
-      if (value && typeof value === 'object' && value['#text'] !== undefined) {
-        var fieldName = prefix + '_' + key;
-        var $el = $('[name="' + fieldName + '"]');
-        if ($el.length) $el.val(value['#text']).trigger('change');
-        var ccy = value['@Ccy'] || value.Ccy;
-        if (ccy) {
-          var $ccyEl = $('[name="' + fieldName + '_CCY"]');
-          if ($ccyEl.length) $ccyEl.val(ccy).trigger('change');
+    function $find(selector) {
+      var root = getRoot();
+      if (root === document) return $(selector);
+      var $items = $(root).find(selector);
+      if ($(root).is(selector)) $items = $items.add(root);
+      return $items;
+    }
+
+    function findByName(name) {
+      return $find('[name="' + String(name).replace(/"/g, '\\"') + '"]');
+    }
+
+    function getRuntimeConfig() {
+      var messages = appConfig.messages || {};
+      return messages[MESSAGE_ID] || messages['default'] || {};
+    }
+
+    function getAliasTarget(key) {
+      var cfg = getRuntimeConfig();
+      var aliases = cfg.fieldAliases || {};
+      var mappings = cfg.valueMappings || {};
+      return aliases[key] || mappings[key] || null;
+    }
+
+    function findFieldMetaByKey(key) {
+      var normalized = normalizeIsoPath(key);
+      for (var i = 0; i < fieldMeta.length; i++) {
+        var meta = fieldMeta[i];
+        if (meta.form_name === key || meta.iso_path === key ||
+            normalizeIsoPath(meta.iso_path) === normalized) {
+          return meta;
         }
-      } else if (typeof value === 'object' && value !== null) {
-        importNested(value, prefix + '_' + key);
-      } else {
-        var fn = prefix + '_' + key;
-        var $field = $('[name="' + fn + '"]');
-        if ($field.length) $field.val(String(value)).trigger('change');
+      }
+      return null;
+    }
+
+    function findElementByIdInRoot(id) {
+      var root = getRoot();
+      var el = document.getElementById(id);
+      if (el && contains(root, el)) return el;
+      var $found = $find('[id="' + String(id).replace(/"/g, '\\"') + '"]');
+      return $found.length ? $found[0] : null;
+    }
+
+    function resolveFieldElement(reference) {
+      if (!reference) return null;
+      if (reference.nodeType === 1) return contains(getRoot(), reference) ? reference : null;
+      if (reference.jquery) return reference[0] && contains(getRoot(), reference[0]) ? reference[0] : null;
+
+      var key = String(reference);
+      var alias = getAliasTarget(key);
+      if (alias) {
+        if (typeof alias === 'string') return resolveFieldElement(alias);
+        if (alias.name) return resolveFieldElement(alias.name);
+        if (alias.isoPath) return resolveFieldElement(alias.isoPath);
+        if (alias.target) return resolveFieldElement(alias.target);
+      }
+
+      if (key.indexOf('[name="') === 0 || key.indexOf("[name='") === 0) {
+        key = key.substring(7, key.length - 2);
+      }
+
+      var meta = findFieldMetaByKey(key);
+      if (meta && meta.form_name) {
+        var el = findElementByIdInRoot(meta.form_name);
+        if (el) return el;
+      }
+
+      var el2 = findElementByIdInRoot(key);
+      if (el2) return el2;
+
+      var $found = findByName(key);
+      return $found.length ? $found[0] : null;
+    }
+
+    function buildJson() {
+      var json = { AppHdr: {}, Document: {} };
+      $find('[data-iso-path]').each(function() {
+        var el = this;
+        if (!el.name || !el.value || trim(el.value) === '') return;
+        var path = $(el).attr('data-iso-path') || '';
+        if (path.indexOf('AppHdr') === 0) assignNested(json.AppHdr, path, el.value);
+        else if (path.indexOf('Document') === 0) assignNested(json.Document, path, el.value);
+      });
+      return json;
+    }
+
+    function emitEvent(type, payload) {
+      var handlers = apiEvents[type] || [];
+      var event = $.extend({ type: type, messageId: MESSAGE_ID, mode: formMode }, payload || {});
+      for (var i = 0; i < handlers.length; i++) {
+        try { handlers[i](event); } catch (e) {}
+      }
+      return event;
+    }
+
+    function onEvent(type, handler) {
+      if (!apiEvents[type]) apiEvents[type] = [];
+      apiEvents[type].push(handler);
+      return function() { offEvent(type, handler); };
+    }
+
+    function offEvent(type, handler) {
+      var handlers = apiEvents[type];
+      if (!handlers) return;
+      for (var i = handlers.length - 1; i >= 0; i--) {
+        if (handlers[i] === handler) handlers.splice(i, 1);
       }
     }
-  }
 
-  function validate() {
-    var errorCount = 0;
-    if (window.APP && window.APP.validateAll) {
-      errorCount = window.APP.validateAll();
+    function setField(key, value, options) {
+      var el = resolveFieldElement(key);
+      if (!el) return { ok: false, key: key, error: 'field not found' };
+      var oldValue = el.value;
+      $(el).val(value == null ? '' : String(value)).trigger('change');
+      if (!options || options.emit !== false) {
+        emitEvent('change', { field: el.name, value: el.value, oldValue: oldValue, element: el });
+      }
+      return {
+        ok: true,
+        name: el.name,
+        isoPath: $(el).attr('data-iso-path') || '',
+        value: el.value,
+        element: el
+      };
     }
-    var errors = getErrors();
-    var result = { valid: errors.length === 0, errorCount: errors.length, errors: errors };
-    emitEvent('validate', result);
-    return result;
-  }
 
-  function submit(options) {
-    var json = buildJson();
-    var xml = jsonToXml(json);
-    var evt = emitEvent('beforeSubmit', { json: json, xml: xml, cancel: false });
-    if (evt.cancel) return { cancelled: true };
+    function getField(key) {
+      var el = resolveFieldElement(key);
+      if (!el) return null;
+      return {
+        name: el.name,
+        isoPath: $(el).attr('data-iso-path') || '',
+        value: el.value,
+        element: el,
+        meta: findFieldMetaByKey(el.name)
+      };
+    }
 
-    var valResult = validate();
-    var result = {
-      valid: valResult.valid,
-      mode: formMode,
-      values: getValues({ includeEmpty: false }),
-      json: json,
-      xml: xml,
-      errors: valResult.errors
+    function setValues(values, options) {
+      var results = [];
+      if (!values) return results;
+      for (var key in values) {
+        if (values.hasOwnProperty(key)) {
+          results.push(setField(key, values[key], { emit: options ? options.emit : true }));
+        }
+      }
+      return results;
+    }
+
+    function getValues(options) {
+      var includeEmpty = options && options.includeEmpty;
+      var out = {};
+      $find('[data-form-name]').each(function() {
+        if (this.name && (includeEmpty || this.value !== '')) {
+          out[this.name] = this.value;
+        }
+      });
+      return out;
+    }
+
+    function getIsoPathValues(options) {
+      var includeEmpty = options && options.includeEmpty;
+      var out = {};
+      $find('[data-iso-path]').each(function() {
+        var path = $(this).attr('data-iso-path');
+        if (path && this.name && (includeEmpty || this.value !== '')) {
+          out[path] = this.value;
+        }
+      });
+      return out;
+    }
+
+    function clearValues(options) {
+      $find('[data-form-name]').each(function() {
+        if (!this.readOnly && !this.disabled) {
+          $(this).val('').trigger('change');
+        }
+      });
+      emitEvent('clear', {});
+    }
+
+    function importNested(obj, prefix) {
+      for (var key in obj) {
+        if (!obj.hasOwnProperty(key)) continue;
+        var value = obj[key];
+        if (value && typeof value === 'object' && value['#text'] !== undefined) {
+          var fieldName = prefix + '_' + key;
+          var $el = findByName(fieldName);
+          if ($el.length) $el.val(value['#text']).trigger('change');
+          var ccy = value['@Ccy'] || value.Ccy;
+          if (ccy) {
+            var $ccyEl = findByName(fieldName + '_CCY');
+            if ($ccyEl.length) $ccyEl.val(ccy).trigger('change');
+          }
+        } else if (typeof value === 'object' && value !== null) {
+          importNested(value, prefix + '_' + key);
+        } else {
+          var fn = prefix + '_' + key;
+          var $field = findByName(fn);
+          if ($field.length) $field.val(String(value)).trigger('change');
+        }
+      }
+    }
+
+    function loadJson(json) {
+      if (!json) return;
+      if (json.AppHdr) importNested(json.AppHdr, 'AH_AppHdr');
+      if (json.Document) {
+        var docKey = null;
+        for (var k in json.Document) { if (json.Document.hasOwnProperty(k)) { docKey = k; break; } }
+        if (docKey) importNested(json.Document[docKey], 'DOC_' + docKey);
+      }
+      snapshotInitialValues();
+      emitEvent('load', { json: json, fieldCount: $find('[data-form-name]').length });
+    }
+
+    function getErrors() {
+      var errors = [];
+      var validationErrors = (window.APP && window.APP.validationErrors) || {};
+      for (var name in validationErrors) {
+        if (validationErrors.hasOwnProperty(name) && validationErrors[name]) {
+          var el = findElementByIdInRoot(name) || findByName(name)[0] || null;
+          if (el) errors.push({ field: name, message: validationErrors[name], element: el });
+        }
+      }
+      $find('.has-error [data-form-name]').each(function() {
+        var name = this.name || $(this).attr('data-form-name') || '';
+        if (!name || validationErrors[name]) return;
+        var msg = $(this).closest('.field-group').find('.error-msg').text() || 'invalid field';
+        errors.push({ field: name, message: msg, element: this });
+      });
+      return errors;
+    }
+
+    function validate() {
+      if (window.APP && window.APP.validateAll) {
+        window.APP.validateAll();
+      }
+      var errors = getErrors();
+      var result = { valid: errors.length === 0, errorCount: errors.length, errors: errors };
+      emitEvent('validate', result);
+      return result;
+    }
+
+    function submit(options) {
+      var json = buildJson();
+      var xml = jsonToXml(json);
+      var evt = emitEvent('beforeSubmit', { json: json, xml: xml, cancel: false });
+      if (evt.cancel) return { cancelled: true };
+
+      var valResult = validate();
+      var result = {
+        valid: valResult.valid,
+        mode: formMode,
+        values: getValues({ includeEmpty: false }),
+        json: json,
+        xml: xml,
+        errors: valResult.errors
+      };
+      if (options && options.focusFirstError && !valResult.valid) {
+        focusFirstError();
+      }
+      emitEvent('submit', result);
+      return result;
+    }
+
+    function snapshotInitialValues() {
+      initialValues = {};
+      $find('[data-form-name]').each(function() {
+        if (this.name) initialValues[this.name] = this.value || '';
+      });
+    }
+
+    function getDirtyFields() {
+      var dirty = [];
+      $find('[data-form-name]').each(function() {
+        if (!this.name) return;
+        var init = initialValues.hasOwnProperty(this.name) ? initialValues[this.name] : '';
+        if (this.value !== init) dirty.push(this.name);
+      });
+      return dirty;
+    }
+
+    function reset() {
+      for (var name in initialValues) {
+        if (!initialValues.hasOwnProperty(name)) continue;
+        var $el = findByName(name);
+        if ($el.length) $el.val(initialValues[name]).trigger('change');
+      }
+    }
+
+    function setFieldState(key, state, options) {
+      var el = resolveFieldElement(key);
+      if (!el) return { ok: false, key: key, error: 'field not found' };
+      var $group = $(el).closest('.field-group');
+      if ($group.length) {
+        $group.removeClass('field-required field-editable field-readonly field-disabled field-hidden');
+        if (state === 'hidden') $group.addClass('field-hidden');
+        if (state === 'required') $group.addClass('field-required');
+        if (state === 'readonly') $group.addClass('field-readonly');
+        if (state === 'disabled') $group.addClass('field-disabled');
+        if (state === 'editable') $group.addClass('field-editable');
+      }
+      if (state === 'required') $(el).attr('data-required', 'true');
+      if (state === 'editable' || state === 'visible') {
+        el.readOnly = false;
+        el.disabled = false;
+      }
+      if (state === 'readonly') el.readOnly = true;
+      if (state === 'disabled') el.disabled = true;
+      return { ok: true, name: el.name, state: state, element: el };
+    }
+
+    function setFieldsState(stateMap, options) {
+      var results = [];
+      for (var key in stateMap) {
+        if (stateMap.hasOwnProperty(key)) {
+          results.push(setFieldState(key, stateMap[key], options));
+        }
+      }
+      return results;
+    }
+
+    function findFieldsByIsoPathPrefix(prefix) {
+      var normalized = normalizeIsoPath(prefix);
+      var out = [];
+      $find('[data-iso-path]').each(function() {
+        var path = normalizeIsoPath($(this).attr('data-iso-path'));
+        if (path === normalized || path.indexOf(normalized + '.') === 0) {
+          out.push(this);
+        }
+      });
+      return out;
+    }
+
+    function setPathState(prefix, state, options) {
+      var fields = findFieldsByIsoPathPrefix(prefix);
+      var results = [];
+      for (var i = 0; i < fields.length; i++) {
+        results.push(setFieldState(fields[i], state, options));
+      }
+      return results;
+    }
+
+    function setMode(mode, options) {
+      var previousMode = formMode;
+      formMode = mode || 'create';
+      if (formMode === 'review' || formMode === 'readonly') {
+        setPathState('AppHdr', 'readonly', { refresh: false });
+        setPathState('Document', 'readonly', { refresh: false });
+      }
+      if (!options || options.emit !== false) {
+        emitEvent('modeChange', { mode: formMode, previousMode: previousMode });
+      }
+      return formMode;
+    }
+
+    function focusFirstError() {
+      var $first = $find('.has-error [data-form-name]:first');
+      if ($first.length) {
+        $first.focus();
+        $('html, body').animate({ scrollTop: $first.offset().top - 100 }, 300);
+      }
+    }
+
+    function containsElement(el) {
+      return contains(getRoot(), el);
+    }
+
+    function destroy() {
+      apiEvents = {};
+      initialValues = {};
+      if (window.ISO20022_FORM_APIS && window.ISO20022_FORM_APIS[dataKey]) {
+        delete window.ISO20022_FORM_APIS[dataKey];
+      }
+      if (options.apiName && window[options.apiName]) delete window[options.apiName];
+      if (options.formApiName && window[options.formApiName]) delete window[options.formApiName];
+    }
+
+    var api = {
+      messageId: MESSAGE_ID,
+      dataKey: dataKey,
+      rootId: rootId,
+      setField: setField,
+      getField: getField,
+      setValues: setValues,
+      getValues: getValues,
+      getIsoPathValues: getIsoPathValues,
+      clear: clearValues,
+      loadJson: loadJson,
+      importJson: loadJson,
+      getJson: buildJson,
+      getXml: function() { return jsonToXml(buildJson()); },
+      validate: validate,
+      submit: submit,
+      getErrors: getErrors,
+      getDirtyFields: getDirtyFields,
+      reset: reset,
+      destroy: destroy,
+      setFieldState: setFieldState,
+      setFieldsState: setFieldsState,
+      setPathState: setPathState,
+      findFieldsByIsoPathPrefix: findFieldsByIsoPathPrefix,
+      setMode: setMode,
+      getMode: function() { return formMode; },
+      focusFirstError: focusFirstError,
+      containsElement: containsElement,
+      on: onEvent,
+      off: offEvent,
+      _emit: emitEvent
     };
-    if (options && options.focusFirstError && !valResult.valid) {
-      focusFirstError();
-    }
-    emitEvent('submit', result);
-    return result;
-  }
 
-  // --- New Methods: getErrors, getDirtyFields, reset, destroy ---
-
-  function getErrors() {
-    var errors = [];
-    var validationErrors = (window.APP && window.APP.validationErrors) || {};
-    for (var name in validationErrors) {
-      if (validationErrors.hasOwnProperty(name) && validationErrors[name]) {
-        var el = document.getElementById(name) || $('[name="' + name + '"]')[0] || null;
-        errors.push({ field: name, message: validationErrors[name], element: el });
-      }
-    }
-    return errors;
-  }
-
-  function snapshotInitialValues() {
-    initialValues = {};
-    $('[data-form-name]').each(function() {
-      if (this.name) initialValues[this.name] = this.value || '';
+    $(function() {
+      snapshotInitialValues();
+      emitEvent('ready', { messageId: MESSAGE_ID, fieldCount: $find('[data-form-name]').length });
     });
+
+    return api;
   }
 
-  function getDirtyFields() {
-    var dirty = [];
-    $('[data-form-name]').each(function() {
-      if (!this.name) return;
-      var init = initialValues.hasOwnProperty(this.name) ? initialValues[this.name] : '';
-      if (this.value !== init) dirty.push(this.name);
-    });
-    return dirty;
-  }
-
-  function reset() {
-    for (var name in initialValues) {
-      if (!initialValues.hasOwnProperty(name)) continue;
-      var $el = $('[name="' + name + '"]');
-      if ($el.length) $el.val(initialValues[name]).trigger('change');
-    }
-  }
-
-  function destroy() {
-    apiEvents = {};
-    initialValues = {};
-    delete window.ISO20022_FORM_API;
-  }
-
-  // --- Field State ---
-
-  function setFieldState(key, state, options) {
-    var el = resolveFieldElement(key);
-    if (!el) return { ok: false, key: key, error: 'field not found' };
-    var $group = $(el).closest('.field-group');
-    if ($group.length) {
-      $group.removeClass('field-required field-editable field-readonly field-disabled field-hidden');
-      if (state === 'hidden') $group.addClass('field-hidden');
-      if (state === 'required') $group.addClass('field-required');
-      if (state === 'readonly') $group.addClass('field-readonly');
-      if (state === 'disabled') $group.addClass('field-disabled');
-      if (state === 'editable') $group.addClass('field-editable');
-    }
-    if (state === 'required') $(el).attr('data-required', 'true');
-    if (state === 'editable' || state === 'visible') {
-      el.readOnly = false;
-      el.disabled = false;
-    }
-    if (state === 'readonly') el.readOnly = true;
-    if (state === 'disabled') el.disabled = true;
-    return { ok: true, name: el.name, state: state, element: el };
-  }
-
-  function setFieldsState(stateMap, options) {
-    var results = [];
-    for (var key in stateMap) {
-      if (stateMap.hasOwnProperty(key)) {
-        results.push(setFieldState(key, stateMap[key], options));
-      }
-    }
-    return results;
-  }
-
-  function findFieldsByIsoPathPrefix(prefix) {
-    var normalized = normalizeIsoPath(prefix);
-    var out = [];
-    $('[data-iso-path]').each(function() {
-      var path = normalizeIsoPath($(this).attr('data-iso-path'));
-      if (path === normalized || path.indexOf(normalized + '.') === 0) {
-        out.push(this);
-      }
-    });
-    return out;
-  }
-
-  function setPathState(prefix, state, options) {
-    var fields = findFieldsByIsoPathPrefix(prefix);
-    var results = [];
-    for (var i = 0; i < fields.length; i++) {
-      results.push(setFieldState(fields[i], state, options));
-    }
-    return results;
-  }
-
-  function setMode(mode, options) {
-    var previousMode = formMode;
-    formMode = mode || 'create';
-    if (formMode === 'review' || formMode === 'readonly') {
-      setPathState('AppHdr', 'readonly', { refresh: false });
-      setPathState('Document', 'readonly', { refresh: false });
-    }
-    if (!options || options.emit !== false) {
-      emitEvent('modeChange', { mode: formMode, previousMode: previousMode });
-    }
-    return formMode;
-  }
-
-  function focusFirstError() {
-    var $first = $('.has-error [data-form-name]:first');
-    if ($first.length) {
-      $first.focus();
-      $('html, body').animate({ scrollTop: $first.offset().top - 100 }, 300);
-    }
-  }
-
-  // --- Expose Public API ---
-  window.ISO20022_FORM_API = {
-    messageId: MESSAGE_ID,
-    setField: setField,
-    getField: getField,
-    setValues: setValues,
-    getValues: getValues,
-    getIsoPathValues: getIsoPathValues,
-    clear: clearValues,
-    loadJson: loadJson,
-    importJson: loadJson,
-    getJson: buildJson,
-    getXml: function() { return jsonToXml(buildJson()); },
-    validate: validate,
-    submit: submit,
-    getErrors: getErrors,
-    getDirtyFields: getDirtyFields,
-    reset: reset,
-    destroy: destroy,
-    setFieldState: setFieldState,
-    setFieldsState: setFieldsState,
-    setPathState: setPathState,
-    findFieldsByIsoPathPrefix: findFieldsByIsoPathPrefix,
-    setMode: setMode,
-    getMode: function() { return formMode; },
-    focusFirstError: focusFirstError,
-    on: onEvent,
-    off: offEvent,
-    _emit: emitEvent
+  window.ISO20022_FORM_API_FACTORY = {
+    create: createApi,
+    findByElement: findApiByElement
   };
 
-  // Snapshot initial values and emit ready event when DOM is loaded
-  $(function() {
-    snapshotInitialValues();
-    emitEvent('ready', { messageId: MESSAGE_ID, fieldCount: $('[data-form-name]').length });
-  });
-
-})(jQuery, window);
+})(jQuery, window, document);

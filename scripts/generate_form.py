@@ -18,6 +18,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from form_app import get_app_js
+from form_api import get_api_file_name, get_form_api_registration_script
 from form_css import get_app_css
 from form_page import generate_app_config_js, generate_field_meta_js, generate_html
 from parse_pdf import parse_pdf
@@ -31,6 +32,10 @@ def resolve_output_dir() -> str:
     if output_dir:
         return os.path.abspath(output_dir)
     return os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'output')
+
+
+def resolve_asset_base() -> str:
+    return os.environ.get('ISO20022_ASSET_BASE', '').strip()
 
 
 def _detect_variant(pdf_path: str, message_id: str) -> str:
@@ -58,7 +63,7 @@ def _detect_variant(pdf_path: str, message_id: str) -> str:
     return ""
 
 
-def write_multi_file(schema: dict, output_dir: str, safe_name: str = "") -> str:
+def write_multi_file(schema: dict, output_dir: str, safe_name: str = "", asset_base: str = "") -> str:
     """Write multi-file output: <msg>.html + js/ + css/ + js/vendor/.
 
     Flat structure: all messages share js/css directories.
@@ -66,10 +71,12 @@ def write_multi_file(schema: dict, output_dir: str, safe_name: str = "") -> str:
       - <safe_name>.html
       - js/<safe_name>_fieldMeta.js
       - js/<safe_name>_appConfig.js
+      - js/<ApiKey>API.js
     Shared files (written once, reused across messages):
       - js/app.js, css/app.css, js/vendor/*, css/bootstrap*
     """
     message_id = schema.get("message_id", "unknown")
+    variant = schema.get("variant", "")
     if not safe_name:
         safe_name = message_id.replace('.', '_')
 
@@ -104,6 +111,12 @@ def write_multi_file(schema: dict, output_dir: str, safe_name: str = "") -> str:
         f.write(generate_app_config_js(schema))
     print(f"  js/{safe_name}_appConfig.js ({os.path.getsize(app_config_path):,} bytes)")
 
+    api_file_name = get_api_file_name(message_id, variant)
+    api_path = os.path.join(js_dir, api_file_name)
+    with open(api_path, "w", encoding="utf-8") as f:
+        f.write(get_form_api_registration_script(message_id, variant))
+    print(f"  js/{api_file_name} ({os.path.getsize(api_path):,} bytes)")
+
     # Copy vendor files (shared)
     vendor_files = {
         "jquery-1.12.4.min.js": "jquery-1.12.4.min.js",
@@ -133,7 +146,7 @@ def write_multi_file(schema: dict, output_dir: str, safe_name: str = "") -> str:
                     df.write(sf.read())
 
     # Write per-message HTML
-    html = generate_html(schema, safe_name=safe_name)
+    html = generate_html(schema, safe_name=safe_name, asset_base=asset_base)
     html_path = os.path.join(output_dir, f"{safe_name}.html")
     with open(html_path, "w", encoding="utf-8") as f:
         f.write(html)
@@ -145,9 +158,14 @@ def write_multi_file(schema: dict, output_dir: str, safe_name: str = "") -> str:
 def write_single_file(schema: dict, output_path: str) -> str:
     """Write single-file output with all JS/CSS inlined."""
     message_id = schema.get("message_id", "unknown")
+    variant = schema.get("variant", "")
+    safe_name = message_id.replace('.', '_')
+    if variant:
+        safe_name = safe_name + "_" + variant
     html = generate_html(schema)
 
     # Read vendor files for inlining
+    api_file_name = get_api_file_name(message_id, variant)
     vendor_js_contents = []
     vendor_js_files = [
         "es5-shim.min.js",
@@ -177,6 +195,7 @@ def write_single_file(schema: dict, output_path: str) -> str:
     app_js = get_app_js(message_id)
     field_meta_js = generate_field_meta_js(schema)
     app_config_js = generate_app_config_js(schema)
+    api_js = get_form_api_registration_script(message_id, variant)
 
     # Replace external references with inline content
     # Replace CSS links with inline style
@@ -218,14 +237,16 @@ def write_single_file(schema: dict, output_path: str) -> str:
         '  <script>\n' + bootstrap_js + '\n</script>\n'
         '  <script>\n' + field_meta_js + '\n</script>\n'
         '  <script>\n' + app_config_js + '\n</script>\n'
-        '  <script>\n' + app_js + '\n</script>'
+        '  <script>\n' + app_js + '\n</script>\n'
+        '  <script>\n' + api_js + '\n</script>'
     )
     html = html.replace(
         '  <script src="js/vendor/jquery-1.12.4.min.js"></script>\n'
         '  <script src="js/vendor/bootstrap.min.js"></script>\n'
-        '  <script src="js/fieldMeta.js"></script>\n'
-        '  <script src="js/appConfig.js"></script>\n'
-        '  <script src="js/app.js"></script>',
+        f'  <script src="js/{safe_name}_fieldMeta.js"></script>\n'
+        f'  <script src="js/{safe_name}_appConfig.js"></script>\n'
+        '  <script src="js/app.js"></script>\n'
+        f'  <script src="js/{api_file_name}"></script>',
         scripts_inline
     )
 
@@ -479,9 +500,17 @@ def main() -> None:
         print()
         print("Options:")
         print("  --single-file   Also generate a single self-contained HTML file")
+        print("  --asset-base    Prefix generated css/js URLs, e.g. /UtanWeb/iso20022/form/")
         sys.exit(1)
 
     single_file = "--single-file" in sys.argv
+    asset_base = resolve_asset_base()
+    if "--asset-base" in sys.argv:
+        idx = sys.argv.index("--asset-base")
+        if idx + 1 >= len(sys.argv):
+            print("ERROR: --asset-base requires a URL prefix", file=sys.stderr)
+            sys.exit(1)
+        asset_base = sys.argv[idx + 1]
 
     # Mode 2: Generate from existing schema JSON
     pdf_path = ""
@@ -564,7 +593,7 @@ def main() -> None:
     form_dir = os.path.join(output_dir, "form")
     os.makedirs(form_dir, exist_ok=True)
     print("\nMulti-file output:")
-    write_multi_file(schema, form_dir, safe_name)
+    write_multi_file(schema, form_dir, safe_name, asset_base=asset_base)
 
     # Single-file output (optional)
     if single_file:

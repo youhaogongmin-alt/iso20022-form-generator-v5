@@ -17,6 +17,7 @@ import html as html_mod
 import json
 
 from field_renderer import detect_component_type, render_field_html
+from form_api import get_api_file_name, get_api_key
 from form_rules import (
     BUSINESS_RULES,
     COMPONENT_SIGNATURES,
@@ -33,11 +34,12 @@ from form_rules import (
 # ==================== Public API ====================
 
 
-def generate_html(schema: dict, safe_name: str = "") -> str:
+def generate_html(schema: dict, safe_name: str = "", asset_base: str = "") -> str:
     """Generate complete HTML form page from parsed schema.
 
     Returns a full HTML document string referencing external CSS/JS files.
     safe_name is used for per-message JS file references (e.g. 'pacs_008_001_08').
+    asset_base optionally prefixes css/js URLs for business-system deployment.
     """
     message_id = schema.get("message_id", "Unknown")
     if not safe_name:
@@ -47,6 +49,10 @@ def generate_html(schema: dict, safe_name: str = "") -> str:
     collection_name = schema.get("collection_name", "")
     app_hdr_fields = schema.get("app_hdr_fields", [])
     document_fields = schema.get("document_fields", [])
+    variant = schema.get("variant", "")
+    api_key = get_api_key(message_id, variant)
+    root_id = api_key + "_PAGE"
+    api_file_name = get_api_file_name(message_id, variant)
 
     # --- Render field HTML ---
     app_hdr_html = ""
@@ -65,17 +71,31 @@ def generate_html(schema: dict, safe_name: str = "") -> str:
 
     # --- Build at-least-one groups script block ---
     at_least_one_js = (
-        "<script>\nwindow.AT_LEAST_ONE_GROUPS = "
+        "<script>\n"
+        "window.ISO20022_FORM_DATA = window.ISO20022_FORM_DATA || {};\n"
+        f"window.ISO20022_FORM_DATA[{json.dumps(api_key)}] = "
+        f"window.ISO20022_FORM_DATA[{json.dumps(api_key)}] || {{}};\n"
+        f"window.ISO20022_FORM_DATA[{json.dumps(api_key)}].atLeastOneGroups = "
         + json.dumps(at_least_one_groups, ensure_ascii=False)
-        + ";\n</script>"
+        + ";\n"
+        f"window.AT_LEAST_ONE_GROUPS = "
+        f"window.ISO20022_FORM_DATA[{json.dumps(api_key)}].atLeastOneGroups;\n"
+        "</script>"
     )
 
     # --- Build choice groups script block ---
     choice_groups = schema.get("choice_groups", [])
     choice_groups_js = (
-        "<script>\nwindow.CHOICE_GROUPS = "
+        "<script>\n"
+        "window.ISO20022_FORM_DATA = window.ISO20022_FORM_DATA || {};\n"
+        f"window.ISO20022_FORM_DATA[{json.dumps(api_key)}] = "
+        f"window.ISO20022_FORM_DATA[{json.dumps(api_key)}] || {{}};\n"
+        f"window.ISO20022_FORM_DATA[{json.dumps(api_key)}].choiceGroups = "
         + json.dumps(choice_groups, ensure_ascii=False)
-        + ";\n</script>"
+        + ";\n"
+        f"window.CHOICE_GROUPS = "
+        f"window.ISO20022_FORM_DATA[{json.dumps(api_key)}].choiceGroups;\n"
+        "</script>"
     )
 
     # --- Escape user-facing text for HTML ---
@@ -86,10 +106,10 @@ def generate_html(schema: dict, safe_name: str = "") -> str:
 
     # --- Assemble page ---
     parts = [
-        _html_head(esc_msg_id, esc_name_zh, esc_name_en, esc_collection),
+        _html_head(esc_msg_id, esc_name_zh, esc_name_en, esc_collection, root_id, asset_base),
         _html_progress_template_search(),
         _html_form_sections(app_hdr_html, document_html),
-        _html_footer(at_least_one_js + "\n" + choice_groups_js, safe_name),
+        _html_footer(at_least_one_js + "\n" + choice_groups_js, safe_name, api_file_name, asset_base),
     ]
     return "\n".join(parts)
 
@@ -111,18 +131,33 @@ def generate_field_meta_js(schema: dict) -> str:
     # Generate component templates from schema
     templates = _build_component_templates(schema)
 
+    api_key = get_api_key(schema.get("message_id", "Unknown"), schema.get("variant", ""))
+
     parts = []
     parts.append(
-        "window.COMPONENT_TEMPLATES = "
+        "(function(window) {\n"
+        f"var apiKey = {json.dumps(api_key)};\n"
+        "window.ISO20022_FORM_DATA = window.ISO20022_FORM_DATA || {};\n"
+        "window.ISO20022_FORM_DATA[apiKey] = window.ISO20022_FORM_DATA[apiKey] || {};\n"
+        "var bucket = window.ISO20022_FORM_DATA[apiKey];\n"
+    )
+    parts.append(
+        "bucket.componentTemplates = "
         + json.dumps(templates, ensure_ascii=False, indent=2) + ";\n"
     )
     parts.append(
-        "window.COMPONENT_INSTANCES = "
+        "bucket.componentInstances = "
         + json.dumps(component_instances, ensure_ascii=False) + ";\n"
     )
     parts.append(
-        "window.FIELD_META = "
+        "bucket.fieldMeta = "
         + json.dumps(independent_fields, ensure_ascii=False) + ";\n"
+    )
+    parts.append(
+        "window.COMPONENT_TEMPLATES = bucket.componentTemplates;\n"
+        "window.COMPONENT_INSTANCES = bucket.componentInstances;\n"
+        "window.FIELD_META = bucket.fieldMeta;\n"
+        "})(window);\n"
     )
     return "\n".join(parts)
 
@@ -133,6 +168,7 @@ def generate_app_config_js(schema: dict) -> str:
     Returns a string suitable for writing directly to js/appConfig.js.
     """
     message_id = schema.get("message_id", "Unknown")
+    api_key = get_api_key(message_id, schema.get("variant", ""))
     config = {
         "showTemplateBar": True,
         "messages": {
@@ -150,9 +186,16 @@ def generate_app_config_js(schema: dict) -> str:
         }
     }
     return (
-        "window.ISO20022_APP_CONFIG = "
+        "(function(window) {\n"
+        f"var apiKey = {json.dumps(api_key)};\n"
+        "window.ISO20022_FORM_DATA = window.ISO20022_FORM_DATA || {};\n"
+        "window.ISO20022_FORM_DATA[apiKey] = window.ISO20022_FORM_DATA[apiKey] || {};\n"
+        "var bucket = window.ISO20022_FORM_DATA[apiKey];\n"
+        "bucket.appConfig = "
         + json.dumps(config, ensure_ascii=False, indent=2)
         + ";\n"
+        "window.ISO20022_APP_CONFIG = bucket.appConfig;\n"
+        "})(window);\n"
     )
 
 
@@ -449,7 +492,15 @@ def _collect_at_least_one_groups(app_hdr_fields: list, document_fields: list) ->
 # ==================== HTML Page Assembly Functions ====================
 
 
-def _html_head(message_id: str, name_zh: str, name_en: str, collection: str) -> str:
+def _asset_url(asset_base: str, relative_path: str) -> str:
+    """Return an HTML-safe asset URL with an optional deployment prefix."""
+    base = (asset_base or "").strip()
+    if base and not base.endswith("/"):
+        base += "/"
+    return html_mod.escape(base + relative_path, quote=True)
+
+
+def _html_head(message_id: str, name_zh: str, name_en: str, collection: str, root_id: str, asset_base: str) -> str:
     """Return <!DOCTYPE> through opening <body> and page header bar."""
     return (
         '<!DOCTYPE html>\n'
@@ -459,19 +510,20 @@ def _html_head(message_id: str, name_zh: str, name_en: str, collection: str) -> 
         '  <meta http-equiv="X-UA-Compatible" content="IE=edge">\n'
         '  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n'
         f'  <title>{message_id} - ISO 20022 Message Form</title>\n'
-        '  <link rel="stylesheet" href="css/bootstrap.min.css">\n'
-        '  <link rel="stylesheet" href="css/bootstrap-theme.min.css">\n'
-        '  <link rel="stylesheet" href="css/app.css">\n'
+        f'  <link rel="stylesheet" href="{_asset_url(asset_base, "css/bootstrap.min.css")}">\n'
+        f'  <link rel="stylesheet" href="{_asset_url(asset_base, "css/bootstrap-theme.min.css")}">\n'
+        f'  <link rel="stylesheet" href="{_asset_url(asset_base, "css/app.css")}">\n'
         '  <!--[if lt IE 9]>\n'
-        '  <script src="js/vendor/html5shiv.min.js"></script>\n'
-        '  <script src="js/vendor/respond.min.js"></script>\n'
-        '  <script src="js/vendor/es5-shim.min.js"></script>\n'
-        '  <script src="js/vendor/es5-sham.min.js"></script>\n'
-        '  <script src="js/vendor/json2.min.js"></script>\n'
+        f'  <script src="{_asset_url(asset_base, "js/vendor/html5shiv.min.js")}"></script>\n'
+        f'  <script src="{_asset_url(asset_base, "js/vendor/respond.min.js")}"></script>\n'
+        f'  <script src="{_asset_url(asset_base, "js/vendor/es5-shim.min.js")}"></script>\n'
+        f'  <script src="{_asset_url(asset_base, "js/vendor/es5-sham.min.js")}"></script>\n'
+        f'  <script src="{_asset_url(asset_base, "js/vendor/json2.min.js")}"></script>\n'
         '  <![endif]-->\n'
         '</head>\n'
         '<body class="theme-light">\n'
         '\n'
+        f'  <div id="{root_id}" class="iso20022-form-page">\n'
         '  <div id="page-wrapper">\n'
         '    <div class="main-panel">\n'
     )
@@ -557,6 +609,7 @@ def _html_form_sections(app_hdr_html: str, document_html: str) -> str:
         '\n'
         '    </div>\n'
         '  </div>\n'
+        '  </div>\n'
     )
 
 
@@ -622,7 +675,7 @@ def _html_json_panel(message_id: str) -> str:
         '  </div>\n'
     )
 
-def _html_footer(at_least_one_js: str, safe_name: str = "") -> str:
+def _html_footer(at_least_one_js: str, safe_name: str = "", api_file_name: str = "", asset_base: str = "") -> str:
     """Return toast, confirm modal, and scripts."""
     return (
         '\n'
@@ -650,11 +703,12 @@ def _html_footer(at_least_one_js: str, safe_name: str = "") -> str:
         + at_least_one_js + '\n'
         '\n'
         '  <!-- Scripts -->\n'
-        '  <script src="js/vendor/jquery-1.12.4.min.js"></script>\n'
-        '  <script src="js/vendor/bootstrap.min.js"></script>\n'
-        f'  <script src="js/{safe_name}_fieldMeta.js"></script>\n'
-        f'  <script src="js/{safe_name}_appConfig.js"></script>\n'
-        '  <script src="js/app.js"></script>\n'
+        f'  <script src="{_asset_url(asset_base, "js/vendor/jquery-1.12.4.min.js")}"></script>\n'
+        f'  <script src="{_asset_url(asset_base, "js/vendor/bootstrap.min.js")}"></script>\n'
+        f'  <script src="{_asset_url(asset_base, "js/" + safe_name + "_fieldMeta.js")}"></script>\n'
+        f'  <script src="{_asset_url(asset_base, "js/" + safe_name + "_appConfig.js")}"></script>\n'
+        f'  <script src="{_asset_url(asset_base, "js/app.js")}"></script>\n'
+        f'  <script src="{_asset_url(asset_base, "js/" + api_file_name)}"></script>\n'
         '</body>\n'
         '</html>\n'
     )

@@ -1,4 +1,9 @@
-window.ISO20022_APP_CONFIG = {
+(function(window) {
+var apiKey = "CAMT029";
+window.ISO20022_FORM_DATA = window.ISO20022_FORM_DATA || {};
+window.ISO20022_FORM_DATA[apiKey] = window.ISO20022_FORM_DATA[apiKey] || {};
+var bucket = window.ISO20022_FORM_DATA[apiKey];
+bucket.appConfig = {
   "showTemplateBar": true,
   "messages": {
     "camt.029.001.09": {
@@ -330,3 +335,5 @@ window.ISO20022_APP_CONFIG = {
     }
   }
 };
+window.ISO20022_APP_CONFIG = bucket.appConfig;
+})(window);

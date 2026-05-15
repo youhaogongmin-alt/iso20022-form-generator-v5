@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>ISO20022 Embedded API Test</title>
+  <link rel="stylesheet" href="css/bootstrap.min.css">
+  <style>
+    body { padding: 20px; background: #f5f7fa; font-family: Arial, "Microsoft YaHei", sans-serif; }
+    .test-shell { max-width: 1100px; margin: 0 auto; }
+    .test-grid { overflow: hidden; margin: 0 -10px; }
+    .test-col { float: left; width: 50%; padding: 0 10px; }
+    .test-card { background: #fff; border: 1px solid #d8dde6; border-radius: 4px; padding: 16px; min-height: 210px; }
+    .test-card h2 { margin: 0 0 14px; font-size: 18px; }
+    .test-actions { clear: both; padding-top: 16px; }
+    .test-output { margin-top: 12px; min-height: 90px; font-family: Consolas, monospace; white-space: pre-wrap; }
+    label { display: block; font-weight: normal; color: #333; }
+    @media (max-width: 800px) { .test-col { float: none; width: 100%; margin-bottom: 12px; } }
+  </style>
+</head>
+<body>
+  <div class="test-shell">
+    <h1>MX 直嵌 API 隔离测试</h1>
+    <p>这个页面模拟业务系统把两个 MX 报文页面片段放进同一个 DOM。两个区域故意使用相同字段名，用来检查 API 是否只读写自己的页面根节点。</p>
+
+    <div class="test-grid">
+      <div class="test-col">
+        <div id="PACS008_PAGE" class="test-card iso20022-form-page">
+          <h2>PACS008_PAGE</h2>
+          <div class="field-group">
+            <label for="AH_AppHdr_BizMsgIdr">AH_AppHdr_BizMsgIdr</label>
+            <input type="text" class="form-control" id="AH_AppHdr_BizMsgIdr" name="AH_AppHdr_BizMsgIdr" data-form-name="AH_AppHdr_BizMsgIdr" data-iso-path="AppHdr.BizMsgIdr" value="">
+          </div>
+        </div>
+      </div>
+
+      <div class="test-col">
+        <div id="CAMT029_PAGE" class="test-card iso20022-form-page">
+          <h2>CAMT029_PAGE</h2>
+          <div class="field-group">
+            <label for="AH_AppHdr_BizMsgIdr_CAMT029">AH_AppHdr_BizMsgIdr</label>
+            <input type="text" class="form-control" id="AH_AppHdr_BizMsgIdr" name="AH_AppHdr_BizMsgIdr" data-form-name="AH_AppHdr_BizMsgIdr" data-iso-path="AppHdr.BizMsgIdr" value="">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="test-actions">
+      <button type="button" class="btn btn-default" id="checkResources">检查 JS 加载</button>
+      <button type="button" class="btn btn-primary" id="runTest">运行 API 隔离测试</button>
+      <button type="button" class="btn btn-default" id="clearTest">清空</button>
+      <pre class="test-output" id="testOutput"></pre>
+    </div>
+  </div>
+
+  <script>
+    window.AT_LEAST_ONE_GROUPS = [];
+    window.CHOICE_GROUPS = [];
+  </script>
+  <script src="js/vendor/jquery-1.12.4.min.js"></script>
+  <script src="js/vendor/bootstrap.min.js"></script>
+  <script src="js/pacs_008_001_08_fieldMeta.js"></script>
+  <script src="js/pacs_008_001_08_appConfig.js"></script>
+  <script src="js/camt_029_001_09_fieldMeta.js"></script>
+  <script src="js/camt_029_001_09_appConfig.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/PACS008API.js"></script>
+  <script src="js/CAMT029API.js"></script>
+  <script>
+    (function($, window) {
+      function write(text) {
+        $("#testOutput").text(text);
+      }
+
+      function yesNo(ok) {
+        return ok ? "OK" : "MISSING";
+      }
+
+      function getResourceStatus() {
+        var data = window.ISO20022_FORM_DATA || {};
+        var lines = [];
+        lines.push("jquery-1.12.4.min.js: " + yesNo(!!window.jQuery));
+        lines.push("pacs_008_001_08_fieldMeta.js: " + yesNo(!!data.PACS008 && !!data.PACS008.fieldMeta));
+        lines.push("pacs_008_001_08_appConfig.js: " + yesNo(!!data.PACS008 && !!data.PACS008.appConfig));
+        lines.push("camt_029_001_09_fieldMeta.js: " + yesNo(!!data.CAMT029 && !!data.CAMT029.fieldMeta));
+        lines.push("camt_029_001_09_appConfig.js: " + yesNo(!!data.CAMT029 && !!data.CAMT029.appConfig));
+        lines.push("app.js: " + yesNo(!!window.APP && !!window.ISO20022_FORM_API_FACTORY));
+        lines.push("PACS008API.js: " + yesNo(!!window.PACS008API && !!window.PACS008_FORM_API));
+        lines.push("CAMT029API.js: " + yesNo(!!window.CAMT029API && !!window.CAMT029_FORM_API));
+        return lines.join("\n");
+      }
+
+      $("#checkResources").on("click", function() {
+        write(getResourceStatus());
+      });
+
+      $("#runTest").on("click", function() {
+        if (!window.PACS008API || !window.CAMT029API) {
+          write("API 未加载：PACS008API=" + !!window.PACS008API + ", CAMT029API=" + !!window.CAMT029API + "\n\n" + getResourceStatus());
+          return;
+        }
+
+        window.PACS008API.setField("AH_AppHdr_BizMsgIdr", "PACS008_VALUE", { emit: false });
+        window.CAMT029API.setField("AH_AppHdr_BizMsgIdr", "CAMT029_VALUE", { emit: false });
+
+        var pacsValue = window.PACS008API.getField("AH_AppHdr_BizMsgIdr").value;
+        var camtValue = window.CAMT029API.getField("AH_AppHdr_BizMsgIdr").value;
+        var pacsIso = window.PACS008API.getIsoPathValues({ includeEmpty: false });
+        var camtIso = window.CAMT029API.getIsoPathValues({ includeEmpty: false });
+        var ok = pacsValue === "PACS008_VALUE" && camtValue === "CAMT029_VALUE";
+
+        write(
+          "PACS008API: " + pacsValue + "\n" +
+          "CAMT029API: " + camtValue + "\n" +
+          "PACS008 iso AppHdr.BizMsgIdr: " + pacsIso["AppHdr.BizMsgIdr"] + "\n" +
+          "CAMT029 iso AppHdr.BizMsgIdr: " + camtIso["AppHdr.BizMsgIdr"] + "\n" +
+          "结果: " + (ok ? "通过，两个 API 没有串值" : "失败，存在串值") + "\n\n" +
+          getResourceStatus()
+        );
+      });
+
+      $("#clearTest").on("click", function() {
+        window.PACS008API.clear();
+        window.CAMT029API.clear();
+        write("");
+      });
+    })(jQuery, window);
+  </script>
+</body>
+</html>

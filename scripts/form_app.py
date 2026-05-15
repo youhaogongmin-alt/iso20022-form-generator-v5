@@ -23,10 +23,9 @@ from __future__ import annotations
 from form_api import get_form_api_script
 
 
-def get_app_js(message_id: str = "pacs.008.001.08") -> str:
+def get_app_js(message_id: str = "") -> str:
     """Return the complete app.js content."""
-    header = _APP_HEADER.replace("{MESSAGE_ID}", message_id)
-    return header + _APP_BODY + "\n" + get_form_api_script()
+    return _APP_HEADER + _APP_BODY + "\n" + get_form_api_script()
 
 
 # ==================== APP HEADER (IIFE open + globals) ====================
@@ -34,7 +33,16 @@ def get_app_js(message_id: str = "pacs.008.001.08") -> str:
 _APP_HEADER = r"""(function($, window, undefined) {
 "use strict";
 
-var MESSAGE_ID = "{MESSAGE_ID}";
+function getCurrentMessageId() {
+  var config = window.ISO20022_APP_CONFIG || {};
+  var messages = config.messages || {};
+  for (var key in messages) {
+    if (messages.hasOwnProperty(key)) return key;
+  }
+  return "unknown";
+}
+
+var MESSAGE_ID = getCurrentMessageId();
 var DRAFT_KEY = "iso20022-draft-" + MESSAGE_ID;
 var QUICK_DRAFT_KEY = "iso20022-quick-draft-" + MESSAGE_ID;
 
@@ -2554,9 +2562,15 @@ $(document).ready(function() {
     var oldValue = formData[name] || "";
     formData[name] = value;
 
-    // Emit change event via API
-    if (window.ISO20022_FORM_API && window.ISO20022_FORM_API._emit) {
-      window.ISO20022_FORM_API._emit("change", {field: name, value: value, oldValue: oldValue});
+    // Emit change event via the API instance owning this field.
+    var eventApi = null;
+    if (window.ISO20022_FORM_API_FACTORY && window.ISO20022_FORM_API_FACTORY.findByElement) {
+      eventApi = window.ISO20022_FORM_API_FACTORY.findByElement(this);
+    } else {
+      eventApi = window.ISO20022_FORM_API;
+    }
+    if (eventApi && eventApi._emit) {
+      eventApi._emit("change", {field: name, value: value, oldValue: oldValue});
     }
 
     // Validate

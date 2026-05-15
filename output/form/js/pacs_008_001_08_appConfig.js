@@ -1,4 +1,9 @@
-window.ISO20022_APP_CONFIG = {
+(function(window) {
+var apiKey = "PACS008";
+window.ISO20022_FORM_DATA = window.ISO20022_FORM_DATA || {};
+window.ISO20022_FORM_DATA[apiKey] = window.ISO20022_FORM_DATA[apiKey] || {};
+var bucket = window.ISO20022_FORM_DATA[apiKey];
+bucket.appConfig = {
   "showTemplateBar": true,
   "messages": {
     "pacs.008.001.08": {
@@ -487,3 +492,5 @@ window.ISO20022_APP_CONFIG = {
     }
   }
 };
+window.ISO20022_APP_CONFIG = bucket.appConfig;
+})(window);
