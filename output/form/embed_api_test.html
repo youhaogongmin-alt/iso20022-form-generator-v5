@@ -7,29 +7,92 @@
   <link rel="stylesheet" href="css/bootstrap.min.css">
   <style>
     body { padding: 20px; background: #f5f7fa; font-family: Arial, "Microsoft YaHei", sans-serif; }
-    .test-shell { max-width: 1100px; margin: 0 auto; }
+    .test-shell { max-width: 1180px; margin: 0 auto; }
     .test-grid { overflow: hidden; margin: 0 -10px; }
     .test-col { float: left; width: 50%; padding: 0 10px; }
-    .test-card { background: #fff; border: 1px solid #d8dde6; border-radius: 4px; padding: 16px; min-height: 210px; }
+    .test-card { background: #fff; border: 1px solid #d8dde6; border-radius: 4px; padding: 16px; min-height: 260px; }
     .test-card h2 { margin: 0 0 14px; font-size: 18px; }
+    .field-group { margin-bottom: 12px; }
+    .mini-panel { border: 1px solid #d8dde6; border-radius: 4px; margin-bottom: 12px; }
+    .mini-panel-heading { padding: 8px 10px; background: #f0f3f7; cursor: pointer; }
+    .mini-panel-body { padding: 10px; }
+    .repeat-group { margin-top: 12px; }
+    .repeat-item { border-top: 1px solid #e5e9f0; padding-top: 10px; margin-top: 10px; }
+    .repeat-index { display: inline-block; margin-bottom: 8px; color: #666; }
     .test-actions { clear: both; padding-top: 16px; }
-    .test-output { margin-top: 12px; min-height: 90px; font-family: Consolas, monospace; white-space: pre-wrap; }
+    .test-output { margin-top: 12px; min-height: 180px; font-family: Consolas, monospace; white-space: pre-wrap; }
+    .choice-disabled { opacity: .55; }
     label { display: block; font-weight: normal; color: #333; }
     @media (max-width: 800px) { .test-col { float: none; width: 100%; margin-bottom: 12px; } }
   </style>
 </head>
 <body>
   <div class="test-shell">
-    <h1>MX 直嵌 API 隔离测试</h1>
-    <p>这个页面模拟业务系统把两个 MX 报文页面片段放进同一个 DOM。两个区域故意使用相同字段名，用来检查 API 是否只读写自己的页面根节点。</p>
+    <h1>MX 直嵌 API 隔离与联动测试</h1>
+    <p>这个页面模拟业务系统把两个 MX 报文页面片段放进同一个 DOM。按钮会验证 API 隔离、ISO 路径赋值、循环自动新增、嵌套循环、互斥分支和字段联动。</p>
 
     <div class="test-grid">
       <div class="test-col">
         <div id="PACS008_PAGE" class="test-card iso20022-form-page">
           <h2>PACS008_PAGE</h2>
-          <div class="field-group">
+          <div class="field-group" data-form-name="AH_AppHdr_BizMsgIdr">
             <label for="AH_AppHdr_BizMsgIdr">AH_AppHdr_BizMsgIdr</label>
             <input type="text" class="form-control" id="AH_AppHdr_BizMsgIdr" name="AH_AppHdr_BizMsgIdr" data-form-name="AH_AppHdr_BizMsgIdr" data-iso-path="AppHdr.BizMsgIdr" value="">
+          </div>
+          <div class="field-group" data-form-name="AH_AppHdr_CreDt">
+            <label for="AH_AppHdr_CreDt">AH_AppHdr_CreDt</label>
+            <input type="text" class="form-control" id="AH_AppHdr_CreDt" name="AH_AppHdr_CreDt" data-form-name="AH_AppHdr_CreDt" data-iso-path="AppHdr.CreDt" value="">
+          </div>
+
+          <div class="repeat-group panel panel-default" id="repeat_DOC_FIToFICstmrCdtTrf_CdtTrfTxInf" data-repeat-group="repeat_DOC_FIToFICstmrCdtTrf_CdtTrfTxInf" data-min="1" data-max="5">
+            <div class="panel-heading">
+              <h4 class="panel-title" style="display:inline">CdtTrfTxInf</h4>
+              <button type="button" class="btn btn-xs btn-primary btn-repeat-add pull-right">+ 添加</button>
+            </div>
+            <div class="panel-body repeat-items" id="repeat_DOC_FIToFICstmrCdtTrf_CdtTrfTxInf_items">
+              <div class="repeat-item" data-index="1">
+                <span class="repeat-index">第1条</span>
+                <button type="button" class="btn btn-xs btn-danger btn-repeat-remove">×</button>
+                <div class="field-group" data-form-name="DOC_FIToFICstmrCdtTrf_CdtTrfTxInf_PmtId_EndToEndId">
+                  <label>EndToEndId</label>
+                  <input type="text" class="form-control" id="DOC_FIToFICstmrCdtTrf_CdtTrfTxInf_PmtId_EndToEndId" name="DOC_FIToFICstmrCdtTrf_CdtTrfTxInf_PmtId_EndToEndId" data-form-name="DOC_FIToFICstmrCdtTrf_CdtTrfTxInf_PmtId_EndToEndId" data-iso-path="Document.FIToFICstmrCdtTrf.CdtTrfTxInf.PmtId.EndToEndId">
+                </div>
+                <div class="field-group" data-form-name="DOC_FIToFICstmrCdtTrf_CdtTrfTxInf_PmtId_TxId">
+                  <label>TxId</label>
+                  <input type="text" class="form-control" id="DOC_FIToFICstmrCdtTrf_CdtTrfTxInf_PmtId_TxId" name="DOC_FIToFICstmrCdtTrf_CdtTrfTxInf_PmtId_TxId" data-form-name="DOC_FIToFICstmrCdtTrf_CdtTrfTxInf_PmtId_TxId" data-iso-path="Document.FIToFICstmrCdtTrf.CdtTrfTxInf.PmtId.TxId">
+                </div>
+                <div class="repeat-group repeat-leaf panel panel-default" id="repeat_DOC_FIToFICstmrCdtTrf_CdtTrfTxInf_RmtInf_Strd" data-repeat-group="repeat_DOC_FIToFICstmrCdtTrf_CdtTrfTxInf_RmtInf_Strd" data-min="1" data-max="5">
+                  <div class="panel-heading">
+                    <h4 class="panel-title" style="display:inline">RmtInf.Strd</h4>
+                    <button type="button" class="btn btn-xs btn-primary btn-repeat-add pull-right">+ 添加</button>
+                  </div>
+                  <div class="panel-body repeat-items" id="repeat_DOC_FIToFICstmrCdtTrf_CdtTrfTxInf_RmtInf_Strd_items">
+                    <div class="repeat-item" data-index="1">
+                      <span class="repeat-index">第1条</span>
+                      <button type="button" class="btn btn-xs btn-danger btn-repeat-remove">×</button>
+                      <div class="field-group" data-form-name="DOC_FIToFICstmrCdtTrf_CdtTrfTxInf_RmtInf_Strd_AddtlRmtInf">
+                        <label>AddtlRmtInf</label>
+                        <input type="text" class="form-control" id="DOC_FIToFICstmrCdtTrf_CdtTrfTxInf_RmtInf_Strd_AddtlRmtInf" name="DOC_FIToFICstmrCdtTrf_CdtTrfTxInf_RmtInf_Strd_AddtlRmtInf" data-form-name="DOC_FIToFICstmrCdtTrf_CdtTrfTxInf_RmtInf_Strd_AddtlRmtInf" data-iso-path="Document.FIToFICstmrCdtTrf.CdtTrfTxInf.RmtInf.Strd.AddtlRmtInf">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mini-panel">
+            <div class="mini-panel-heading collapsed" data-toggle="collapse" data-target="#collapse_DOC_FIToFICstmrCdtTrf_CdtTrfTxInf_CdtrAcct">CdtrAcct optional panel</div>
+            <div id="collapse_DOC_FIToFICstmrCdtTrf_CdtTrfTxInf_CdtrAcct" class="mini-panel-body collapse">
+              <div class="field-group" data-form-name="DOC_FIToFICstmrCdtTrf_CdtTrfTxInf_CdtrAcct_Id_IBAN">
+                <label>CdtrAcct.Id.IBAN</label>
+                <input type="text" class="form-control" id="DOC_FIToFICstmrCdtTrf_CdtTrfTxInf_CdtrAcct_Id_IBAN" name="DOC_FIToFICstmrCdtTrf_CdtTrfTxInf_CdtrAcct_Id_IBAN" data-form-name="DOC_FIToFICstmrCdtTrf_CdtTrfTxInf_CdtrAcct_Id_IBAN" data-iso-path="Document.FIToFICstmrCdtTrf.CdtTrfTxInf.CdtrAcct.Id.IBAN">
+              </div>
+              <div class="field-group" data-form-name="DOC_FIToFICstmrCdtTrf_CdtTrfTxInf_CdtrAcct_Id_Othr">
+                <label>CdtrAcct.Id.Othr</label>
+                <input type="text" class="form-control" id="DOC_FIToFICstmrCdtTrf_CdtTrfTxInf_CdtrAcct_Id_Othr" name="DOC_FIToFICstmrCdtTrf_CdtTrfTxInf_CdtrAcct_Id_Othr" data-form-name="DOC_FIToFICstmrCdtTrf_CdtTrfTxInf_CdtrAcct_Id_Othr" data-iso-path="Document.FIToFICstmrCdtTrf.CdtTrfTxInf.CdtrAcct.Id.Othr">
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -37,7 +100,7 @@
       <div class="test-col">
         <div id="CAMT029_PAGE" class="test-card iso20022-form-page">
           <h2>CAMT029_PAGE</h2>
-          <div class="field-group">
+          <div class="field-group" data-form-name="AH_AppHdr_BizMsgIdr">
             <label for="AH_AppHdr_BizMsgIdr_CAMT029">AH_AppHdr_BizMsgIdr</label>
             <input type="text" class="form-control" id="AH_AppHdr_BizMsgIdr" name="AH_AppHdr_BizMsgIdr" data-form-name="AH_AppHdr_BizMsgIdr" data-iso-path="AppHdr.BizMsgIdr" value="">
           </div>
@@ -47,27 +110,36 @@
 
     <div class="test-actions">
       <button type="button" class="btn btn-default" id="checkResources">检查 JS 加载</button>
-      <button type="button" class="btn btn-primary" id="runTest">运行 API 隔离测试</button>
+      <button type="button" class="btn btn-primary" id="runIsolationTest">运行 API 隔离测试</button>
+      <button type="button" class="btn btn-primary" id="runAdvancedTest">运行联动/循环测试</button>
       <button type="button" class="btn btn-default" id="clearTest">清空</button>
       <pre class="test-output" id="testOutput"></pre>
     </div>
   </div>
 
-  <script>
-    window.AT_LEAST_ONE_GROUPS = [];
-    window.CHOICE_GROUPS = [];
-  </script>
   <script src="js/vendor/jquery-1.12.4.min.js"></script>
   <script src="js/vendor/bootstrap.min.js"></script>
   <script src="js/pacs_008_001_08_fieldMeta.js"></script>
   <script src="js/pacs_008_001_08_appConfig.js"></script>
   <script src="js/camt_029_001_09_fieldMeta.js"></script>
   <script src="js/camt_029_001_09_appConfig.js"></script>
+  <script>
+    window.ISO20022_FORM_DATA = window.ISO20022_FORM_DATA || {};
+    window.ISO20022_FORM_DATA.PACS008 = window.ISO20022_FORM_DATA.PACS008 || {};
+    window.ISO20022_FORM_DATA.PACS008.choiceGroups = [
+      { options: [{ tag: "IBAN", name: "IBAN" }, { tag: "Othr", name: "Other" }] },
+      { options: [{ tag: "Cd", name: "Code" }, { tag: "Prtry", name: "Proprietary" }] }
+    ];
+    window.CHOICE_GROUPS = window.ISO20022_FORM_DATA.PACS008.choiceGroups;
+    window.AT_LEAST_ONE_GROUPS = [];
+  </script>
   <script src="js/app.js"></script>
   <script src="js/PACS008API.js"></script>
   <script src="js/CAMT029API.js"></script>
   <script>
     (function($, window) {
+      var linkOff = null;
+
       function write(text) {
         $("#testOutput").text(text);
       }
@@ -87,41 +159,181 @@
         lines.push("app.js: " + yesNo(!!window.APP && !!window.ISO20022_FORM_API_FACTORY));
         lines.push("PACS008API.js: " + yesNo(!!window.PACS008API && !!window.PACS008_FORM_API));
         lines.push("CAMT029API.js: " + yesNo(!!window.CAMT029API && !!window.CAMT029_FORM_API));
+        lines.push("setPathValue: " + yesNo(!!window.PACS008API && typeof window.PACS008API.setPathValue === "function"));
+        lines.push("setPathValues: " + yesNo(!!window.PACS008API && typeof window.PACS008API.setPathValues === "function"));
+        lines.push("getPathValue: " + yesNo(!!window.PACS008API && typeof window.PACS008API.getPathValue === "function"));
+        lines.push("getPathValues: " + yesNo(!!window.PACS008API && typeof window.PACS008API.getPathValues === "function"));
+        lines.push("ensurePath: " + yesNo(!!window.PACS008API && typeof window.PACS008API.ensurePath === "function"));
+        lines.push("activateChoice: " + yesNo(!!window.PACS008API && typeof window.PACS008API.activateChoice === "function"));
+        lines.push("registerLinkage: " + yesNo(!!window.PACS008API && typeof window.PACS008API.registerLinkage === "function"));
+        lines.push("registerValidator: " + yesNo(!!window.PACS008API && typeof window.PACS008API.registerValidator === "function"));
+        lines.push("setPathError: " + yesNo(!!window.PACS008API && typeof window.PACS008API.setPathError === "function"));
+        lines.push("clearPathError: " + yesNo(!!window.PACS008API && typeof window.PACS008API.clearPathError === "function"));
+        lines.push("clearErrors: " + yesNo(!!window.PACS008API && typeof window.PACS008API.clearErrors === "function"));
         return lines.join("\n");
+      }
+
+      function line(ok, text) {
+        return (ok ? "PASS " : "FAIL ") + text;
+      }
+
+      function fieldValue(name) {
+        var field = window.PACS008API.getField(name);
+        return field ? field.value : "";
+      }
+
+      function hasApiError(errors, pathOrField, message) {
+        for (var i = 0; i < errors.length; i++) {
+          var err = errors[i];
+          var samePath = err.path === pathOrField || err.field === pathOrField;
+          var sameMessage = !message || String(err.message || "").indexOf(message) !== -1;
+          if (samePath && sameMessage) return true;
+        }
+        return false;
       }
 
       $("#checkResources").on("click", function() {
         write(getResourceStatus());
       });
 
-      $("#runTest").on("click", function() {
+      $("#runIsolationTest").on("click", function() {
         if (!window.PACS008API || !window.CAMT029API) {
           write("API 未加载：PACS008API=" + !!window.PACS008API + ", CAMT029API=" + !!window.CAMT029API + "\n\n" + getResourceStatus());
           return;
         }
 
-        window.PACS008API.setField("AH_AppHdr_BizMsgIdr", "PACS008_VALUE", { emit: false });
-        window.CAMT029API.setField("AH_AppHdr_BizMsgIdr", "CAMT029_VALUE", { emit: false });
+        window.PACS008API.setPathValue("AppHdr.BizMsgIdr", "PACS008_VALUE", { emit: false });
+        window.CAMT029API.setPathValue("AppHdr.BizMsgIdr", "CAMT029_VALUE", { emit: false });
 
         var pacsValue = window.PACS008API.getField("AH_AppHdr_BizMsgIdr").value;
         var camtValue = window.CAMT029API.getField("AH_AppHdr_BizMsgIdr").value;
-        var pacsIso = window.PACS008API.getIsoPathValues({ includeEmpty: false });
-        var camtIso = window.CAMT029API.getIsoPathValues({ includeEmpty: false });
         var ok = pacsValue === "PACS008_VALUE" && camtValue === "CAMT029_VALUE";
 
         write(
+          line(ok, "两个 API 没有串值") + "\n" +
           "PACS008API: " + pacsValue + "\n" +
-          "CAMT029API: " + camtValue + "\n" +
-          "PACS008 iso AppHdr.BizMsgIdr: " + pacsIso["AppHdr.BizMsgIdr"] + "\n" +
-          "CAMT029 iso AppHdr.BizMsgIdr: " + camtIso["AppHdr.BizMsgIdr"] + "\n" +
-          "结果: " + (ok ? "通过，两个 API 没有串值" : "失败，存在串值") + "\n\n" +
+          "CAMT029API: " + camtValue + "\n\n" +
           getResourceStatus()
         );
       });
 
+      $("#runAdvancedTest").on("click", function() {
+        if (!window.PACS008API) {
+          write("PACS008API 未加载\n\n" + getResourceStatus());
+          return;
+        }
+
+        var api = window.PACS008API;
+        var lines = [];
+        var result;
+
+        result = api.setPathValue("AppHdr.BizMsgIdr", "PACS-DIRECT", { emit: false });
+        lines.push(line(result.ok && result.name === "AH_AppHdr_BizMsgIdr", "AppHdr ISO 路径解析到 AH_AppHdr_BizMsgIdr"));
+
+        result = api.setPathValue("Document.FIToFICstmrCdtTrf.CdtTrfTxInf[2].PmtId.EndToEndId", "E2E-002", { emit: false });
+        lines.push(line(result.ok && fieldValue("DOC_FIToFICstmrCdtTrf_CdtTrfTxInf_PmtId_EndToEndId_2") === "E2E-002", "循环字段 [2] 自动新增并赋值"));
+
+        result = api.setPathValue("Document.FIToFICstmrCdtTrf.CdtTrfTxInf[2].RmtInf.Strd[2].AddtlRmtInf", "NESTED-002", { emit: false });
+        lines.push(line(result.ok && fieldValue("DOC_FIToFICstmrCdtTrf_CdtTrfTxInf_RmtInf_Strd_AddtlRmtInf_2_2") === "NESTED-002", "嵌套循环 [2][2] 自动新增并赋值"));
+
+        result = api.setPathValues({
+          "AppHdr.CreDt": "2026-05-15T10:30:00",
+          "Document.FIToFICstmrCdtTrf.CdtTrfTxInf[2].PmtId.TxId": "BATCH-TX-002"
+        }, { emit: false });
+        lines.push(line(
+          result.length === 2 &&
+          api.getPathValue("AppHdr.CreDt") === "2026-05-15T10:30:00" &&
+          api.getPathValue("Document.FIToFICstmrCdtTrf.CdtTrfTxInf[2].PmtId.TxId") === "BATCH-TX-002",
+          "setPathValues/getPathValue 支持批量 ISO 路径写入和读取"
+        ));
+
+        api.setPathValue("Document.FIToFICstmrCdtTrf.CdtTrfTxInf.CdtrAcct.Id.IBAN", "OLD-IBAN", { emit: false });
+        result = api.setPathValue("Document.FIToFICstmrCdtTrf.CdtTrfTxInf.CdtrAcct.Id.Othr", "OTHER-ID", { emit: false });
+        setTimeout(function() {
+          lines.push(line(
+            result.ok &&
+            $("#collapse_DOC_FIToFICstmrCdtTrf_CdtTrfTxInf_CdtrAcct").hasClass("in") &&
+            fieldValue("DOC_FIToFICstmrCdtTrf_CdtTrfTxInf_CdtrAcct_Id_Othr") === "OTHER-ID" &&
+            fieldValue("DOC_FIToFICstmrCdtTrf_CdtTrfTxInf_CdtrAcct_Id_IBAN") === "" &&
+            $("[name='DOC_FIToFICstmrCdtTrf_CdtTrfTxInf_CdtrAcct_Id_IBAN']").prop("disabled"),
+            "可选父节点自动展开，互斥 Othr 激活并清空/禁用 IBAN"
+          ));
+
+          if (linkOff) linkOff();
+          linkOff = api.registerLinkage({
+            source: "Document.FIToFICstmrCdtTrf.CdtTrfTxInf[*].PmtId.EndToEndId",
+            target: "Document.FIToFICstmrCdtTrf.CdtTrfTxInf[*].PmtId.TxId",
+            transform: function(value, ctx) {
+              return "TX-" + ctx.indexes.join("-") + "-" + value;
+            }
+          });
+          result = api.setPathValue("Document.FIToFICstmrCdtTrf.CdtTrfTxInf[2].PmtId.EndToEndId", "LINK-E2E");
+          lines.push(line(
+            result.ok && fieldValue("DOC_FIToFICstmrCdtTrf_CdtTrfTxInf_PmtId_TxId_2") === "TX-2-LINK-E2E",
+            "registerLinkage 按循环下标把 [2] 源字段联动到 [2] 目标字段"
+          ));
+
+          var pathValues = api.getPathValues();
+          var json = api.getJson();
+          lines.push(line(
+            pathValues["Document.FIToFICstmrCdtTrf.CdtTrfTxInf[2].PmtId.EndToEndId"] === "LINK-E2E" &&
+            pathValues["Document.FIToFICstmrCdtTrf.CdtTrfTxInf[2].RmtInf.Strd[2].AddtlRmtInf"] === "NESTED-002" &&
+            json.Document.FIToFICstmrCdtTrf.CdtTrfTxInf[1].PmtId.EndToEndId === "LINK-E2E",
+            "getPathValues/getJson 使用带下标路径，循环字段导出为数组"
+          ));
+
+          var offValidator = api.registerValidator({
+            name: "biz-msg-prefix",
+            path: "AppHdr.BizMsgIdr",
+            validate: function(ctx) {
+              if (String(ctx.value || "").indexOf("PACS-") !== 0) {
+                return "BizMsgIdr must start with PACS-";
+              }
+              return true;
+            }
+          });
+          api.setPathValue("AppHdr.BizMsgIdr", "BAD-CUSTOM", { emit: false });
+          var validation = api.validate();
+          lines.push(line(
+            hasApiError(validation.errors, "AppHdr.BizMsgIdr", "BizMsgIdr must start with PACS-") &&
+            $("#AH_AppHdr_BizMsgIdr").closest(".field-group").hasClass("has-error"),
+            "registerValidator 可以按 ISO 路径写入自定义校验错误"
+          ));
+          api.setPathValue("AppHdr.BizMsgIdr", "PACS-VALID", { emit: false });
+          validation = api.validate();
+          lines.push(line(
+            !hasApiError(validation.errors, "AppHdr.BizMsgIdr", "BizMsgIdr must start with PACS-"),
+            "自定义校验通过后会清除对应错误"
+          ));
+          offValidator();
+
+          api.clearErrors();
+          result = api.setPathError("Document.FIToFICstmrCdtTrf.CdtTrfTxInf[2].PmtId.TxId", "TxId custom error");
+          lines.push(line(
+            result.ok &&
+            hasApiError(api.getErrors(), "Document.FIToFICstmrCdtTrf.CdtTrfTxInf[2].PmtId.TxId", "TxId custom error") &&
+            $("[name='DOC_FIToFICstmrCdtTrf_CdtTrfTxInf_PmtId_TxId_2']").closest(".field-group").hasClass("has-error"),
+            "setPathError 支持循环 ISO 路径写错误"
+          ));
+          api.clearPathError("Document.FIToFICstmrCdtTrf.CdtTrfTxInf[2].PmtId.TxId");
+          lines.push(line(
+            !hasApiError(api.getErrors(), "Document.FIToFICstmrCdtTrf.CdtTrfTxInf[2].PmtId.TxId", "TxId custom error"),
+            "clearPathError 可以清除指定 ISO 路径错误"
+          ));
+
+          write(lines.join("\n") + "\n\n" + getResourceStatus());
+        }, 450);
+      });
+
       $("#clearTest").on("click", function() {
+        if (linkOff) { linkOff(); linkOff = null; }
+        if (window.PACS008API.clearErrors) window.PACS008API.clearErrors();
+        if (window.CAMT029API.clearErrors) window.CAMT029API.clearErrors();
         window.PACS008API.clear();
         window.CAMT029API.clear();
+        $(".choice-disabled").removeClass("choice-disabled");
+        $(".field-disabled").removeClass("field-disabled");
+        $("input,select,textarea").prop("disabled", false).prop("readonly", false);
         write("");
       });
     })(jQuery, window);

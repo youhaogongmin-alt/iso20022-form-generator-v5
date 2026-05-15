@@ -610,6 +610,12 @@ function validateField(name, value) {
   return "";
 }
 
+function clearValidationErrors() {
+  for (var name in validationErrors) {
+    if (validationErrors.hasOwnProperty(name)) delete validationErrors[name];
+  }
+}
+
 function setFieldError(name, msg) {
   var $field = $("[name='" + escapeCssAttr(name) + "']");
   var $group = $field.closest(".field-group");
@@ -690,7 +696,7 @@ function checkConditionalMandatory() {
 
 function validateAll() {
   var errorCount = 0;
-  validationErrors = {};
+  clearValidationErrors();
 
   // Validate each field
   $(".field-group input, .field-group select, .field-group textarea").each(function() {
@@ -1392,7 +1398,7 @@ function scrollDocumentTo(targetTop) {
 }
 
 function expandCardAncestors($el) {
-  $el.parents(".panel-body.collapse").each(function() {
+  $el.parents(".collapse").each(function() {
     var $body = $(this);
     if (!$body.hasClass("in")) {
       $body.collapse("show");
@@ -1508,6 +1514,16 @@ function updateSearchNavState() {
 
 var repeatTemplates = {};
 
+function scopedFind(selector, root) {
+  if (root && root !== document) {
+    var $root = $(root);
+    var $items = $root.find(selector);
+    if ($root.is(selector)) $items = $items.add($root);
+    return $items;
+  }
+  return $(selector);
+}
+
 function getDirectRepeatItems($group) {
   return $group.children(".repeat-items").children(".repeat-item").not(".repeat-template");
 }
@@ -1531,9 +1547,9 @@ function saveRepeatTemplate($group) {
   }
 }
 
-function addRepeatItem(groupId) {
-  var $group = $("[data-repeat-group='" + groupId + "']").first();
-  if (!$group.length) return;
+function addRepeatItem(groupId, root) {
+  var $group = scopedFind("[data-repeat-group='" + escapeCssAttr(groupId) + "']", root).first();
+  if (!$group.length) return null;
 
   // Ensure template is saved (needed for groups with rewritten IDs)
   saveRepeatTemplate($group);
@@ -1544,7 +1560,7 @@ function addRepeatItem(groupId) {
 
   if (max > 0 && count >= max) {
     showToast(t("maxReached", max));
-    return;
+    return null;
   }
 
   // Use saved template or clone first item
@@ -1557,7 +1573,7 @@ function addRepeatItem(groupId) {
     repeatTemplates[groupId] = $newItem.clone();
   } else {
     $newItem = buildDefaultRepeatItem($group);
-    if (!$newItem) return;
+    if (!$newItem) return null;
     repeatTemplates[groupId] = $newItem.clone();
   }
 
@@ -1582,6 +1598,8 @@ function addRepeatItem(groupId) {
       renderComponent(pathPrefix, type, $comp);
     }
   });
+
+  return $newItem[0] || null;
 }
 
 function buildDefaultRepeatItem($group) {
@@ -1694,6 +1712,58 @@ function updateRepeatRemoveState($group) {
   }
 }
 
+function getRepeatItemCount(groupId, root) {
+  var $group = scopedFind("[data-repeat-group='" + escapeCssAttr(groupId) + "']", root).first();
+  if (!$group.length) return 0;
+  return getDirectRepeatItems($group).length;
+}
+
+function openPathByFormName(formName, root, dataBucket) {
+  if (!formName) return null;
+
+  var baseName = String(formName).replace(/(?:_\d+)+$/, "");
+  var instances = (dataBucket && dataBucket.componentInstances) || window.COMPONENT_INSTANCES || [];
+  var best = null;
+  for (var i = 0; i < instances.length; i++) {
+    var prefix = instances[i].pathPrefix || "";
+    if (baseName === prefix || baseName.indexOf(prefix + "_") === 0) {
+      if (!best || prefix.length > best.pathPrefix.length) best = instances[i];
+    }
+  }
+
+  if (best) {
+    var $comp = scopedFind("[data-path-prefix='" + escapeCssAttr(best.pathPrefix) + "']", root).first();
+    if ($comp.length) {
+      expandCardAncestors($comp);
+      if ($comp.attr("data-rendered") === "false") {
+        renderComponent(best.pathPrefix, best.type, $comp);
+      }
+      if ($comp.hasClass("collapse") && !$comp.hasClass("in")) {
+        $comp.collapse("show");
+      }
+    }
+  }
+
+  var $target = scopedFind("[name='" + escapeCssAttr(formName) + "']", root).first();
+  if (!$target.length) {
+    $target = scopedFind(".field-group[data-form-name='" + escapeCssAttr(formName) + "']", root).first();
+  }
+  if (!$target.length) {
+    var $collapse = scopedFind("[id='collapse_" + escapeCssAttr(formName) + "']", root).first();
+    if (!$collapse.length) $collapse = scopedFind("[id='collapse_" + escapeCssAttr(baseName) + "']", root).first();
+    if ($collapse.length) $target = $collapse;
+  }
+
+  if ($target.length) {
+    expandCardAncestors($target);
+    if ($target.hasClass("collapse") && !$target.hasClass("in")) {
+      $target.collapse("show");
+    }
+    return $target[0];
+  }
+  return null;
+}
+
 // ============================================================
 // Module 11: Draft Auto-Save
 // ============================================================
@@ -1774,7 +1844,7 @@ function clearDraft() {
     $(".has-error").removeClass("has-error");
     $(".error-msg").text("").hide();
     $(".biz-warn").text("").hide();
-    validationErrors = {};
+    clearValidationErrors();
     formData = {};
     try {
       localStorage.removeItem(DRAFT_KEY);
@@ -2618,6 +2688,11 @@ window.APP = {
   formData: formData,
   validationErrors: validationErrors,
   setFieldError: setFieldError,
+  addRepeatItem: addRepeatItem,
+  getRepeatItemCount: getRepeatItemCount,
+  openPathByFormName: openPathByFormName,
+  updateJSONPreview: updateJSONPreview,
+  updateProgress: updateProgress,
   escapeCssAttr: escapeCssAttr
 };
 
