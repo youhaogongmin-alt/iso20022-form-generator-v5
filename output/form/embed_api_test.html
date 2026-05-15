@@ -161,11 +161,15 @@
         lines.push("CAMT029API.js: " + yesNo(!!window.CAMT029API && !!window.CAMT029_FORM_API));
         lines.push("setPathValue: " + yesNo(!!window.PACS008API && typeof window.PACS008API.setPathValue === "function"));
         lines.push("setPathValues: " + yesNo(!!window.PACS008API && typeof window.PACS008API.setPathValues === "function"));
+        lines.push("setPathValuesStrict: " + yesNo(!!window.PACS008API && typeof window.PACS008API.setPathValuesStrict === "function"));
         lines.push("getPathValue: " + yesNo(!!window.PACS008API && typeof window.PACS008API.getPathValue === "function"));
         lines.push("getPathValues: " + yesNo(!!window.PACS008API && typeof window.PACS008API.getPathValues === "function"));
+        lines.push("getMeta: " + yesNo(!!window.PACS008API && typeof window.PACS008API.getMeta === "function"));
+        lines.push("findMeta: " + yesNo(!!window.PACS008API && typeof window.PACS008API.findMeta === "function"));
         lines.push("ensurePath: " + yesNo(!!window.PACS008API && typeof window.PACS008API.ensurePath === "function"));
         lines.push("activateChoice: " + yesNo(!!window.PACS008API && typeof window.PACS008API.activateChoice === "function"));
         lines.push("registerLinkage: " + yesNo(!!window.PACS008API && typeof window.PACS008API.registerLinkage === "function"));
+        lines.push("registerComputed: " + yesNo(!!window.PACS008API && typeof window.PACS008API.registerComputed === "function"));
         lines.push("registerValidator: " + yesNo(!!window.PACS008API && typeof window.PACS008API.registerValidator === "function"));
         lines.push("setPathError: " + yesNo(!!window.PACS008API && typeof window.PACS008API.setPathError === "function"));
         lines.push("clearPathError: " + yesNo(!!window.PACS008API && typeof window.PACS008API.clearPathError === "function"));
@@ -320,6 +324,43 @@
             !hasApiError(api.getErrors(), "Document.FIToFICstmrCdtTrf.CdtTrfTxInf[2].PmtId.TxId", "TxId custom error"),
             "clearPathError 可以清除指定 ISO 路径错误"
           ));
+
+          var strictResult = api.setPathValuesStrict({
+            "AppHdr.BizMsgIdr": "PACS-STRICT",
+            "Document.FIToFICstmrCdtTrf.CdtTrfTxInf[2].PmtId.NotExists": "BAD"
+          }, { emit: false });
+          lines.push(line(
+            strictResult.ok === false && strictResult.errorCount === 1 && strictResult.errors[0].ok === false,
+            "setPathValuesStrict 会汇总批量写入失败明细"
+          ));
+
+          var meta = api.getMeta("AppHdr.BizMsgIdr");
+          var metaList = api.findMeta("Document.FIToFICstmrCdtTrf.CdtTrfTxInf.PmtId");
+          lines.push(line(
+            meta && meta.form_name === "AH_AppHdr_BizMsgIdr" && meta.iso_path === "AppHdr.BizMsgIdr" &&
+            metaList && metaList.length > 0,
+            "getMeta/findMeta 可以读取字段元数据"
+          ));
+
+          var computedOff = api.registerComputed({
+            sources: [
+              "AppHdr.BizMsgIdr",
+              "Document.FIToFICstmrCdtTrf.CdtTrfTxInf[*].PmtId.EndToEndId"
+            ],
+            target: "Document.FIToFICstmrCdtTrf.CdtTrfTxInf[*].PmtId.TxId",
+            compute: function(ctx) {
+              var msg = ctx.getPathValue("AppHdr.BizMsgIdr") || "";
+              var e2e = ctx.getPathValue("Document.FIToFICstmrCdtTrf.CdtTrfTxInf[" + ctx.indexes[0] + "].PmtId.EndToEndId") || "";
+              return msg + "-" + e2e;
+            }
+          });
+          api.setPathValue("AppHdr.BizMsgIdr", "PACS-COMP", { emit: false });
+          result = api.setPathValue("Document.FIToFICstmrCdtTrf.CdtTrfTxInf[2].PmtId.EndToEndId", "E2E-COMP");
+          lines.push(line(
+            result.ok && fieldValue("DOC_FIToFICstmrCdtTrf_CdtTrfTxInf_PmtId_TxId_2") === "PACS-COMP-E2E-COMP",
+            "registerComputed 支持多源字段计算并写入同循环下标目标"
+          ));
+          computedOff();
 
           write(lines.join("\n") + "\n\n" + getResourceStatus());
         }, 450);

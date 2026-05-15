@@ -265,6 +265,34 @@ _API_SCRIPT = r"""
       return null;
     }
 
+    function cloneMeta(meta) {
+      if (!meta) return null;
+      var out = {};
+      for (var key in meta) {
+        if (meta.hasOwnProperty(key)) out[key] = meta[key];
+      }
+      out.repeatable = isMetaRepeatable(meta);
+      return out;
+    }
+
+    function getMeta(key) {
+      return cloneMeta(findFieldMetaByKey(stripPathIndexes(key)));
+    }
+
+    function findMeta(prefix) {
+      var normalized = normalizeIsoPath(stripPathIndexes(prefix));
+      var out = [];
+      for (var i = 0; i < fieldMeta.length; i++) {
+        var path = normalizeIsoPath(fieldMeta[i].iso_path);
+        var formName = fieldMeta[i].form_name || '';
+        if (!normalized || path === normalized || path.indexOf(normalized + '.') === 0 ||
+            formName === prefix || formName.indexOf(String(prefix || '') + '_') === 0) {
+          out.push(cloneMeta(fieldMeta[i]));
+        }
+      }
+      return out;
+    }
+
     function splitFormNameWithRepeatSuffix(formName) {
       var name = String(formName || '');
       var best = null;
@@ -583,6 +611,21 @@ _API_SCRIPT = r"""
         }
       }
       return results;
+    }
+
+    function setPathValuesStrict(values, options) {
+      var results = setPathValues(values, options);
+      var errors = [];
+      for (var i = 0; i < results.length; i++) {
+        if (!results[i] || !results[i].ok) errors.push(results[i]);
+      }
+      return {
+        ok: errors.length === 0,
+        count: results.length,
+        errorCount: errors.length,
+        results: results,
+        errors: errors
+      };
     }
 
     function getPathValue(path, options) {
@@ -932,6 +975,77 @@ _API_SCRIPT = r"""
         idx++;
         return '[' + val + ']';
       });
+    }
+
+    function asArray(value) {
+      if (!value) return [];
+      return isArray(value) ? value : [value];
+    }
+
+    function fieldMatchesAny(patterns, field) {
+      for (var i = 0; i < patterns.length; i++) {
+        if (sourceMatches(patterns[i], field)) return true;
+      }
+      return false;
+    }
+
+    function collectIndexesFromSources(sources, field) {
+      for (var i = 0; i < sources.length; i++) {
+        if (sourceMatches(sources[i], field)) {
+          return extractIndexesFromFieldName(sources[i], field.name);
+        }
+      }
+      return [];
+    }
+
+    function registerComputed(rule) {
+      rule = rule || {};
+      var sources = asArray(rule.sources || rule.source);
+      if (!sources.length || !rule.target || typeof rule.compute !== 'function') {
+        return function() {};
+      }
+      var busy = false;
+      var computeNow = function(event, field) {
+        if (busy) return null;
+        var indexes = field ? collectIndexesFromSources(sources, field) : [];
+        var target = typeof rule.target === 'function'
+          ? rule.target({ event: event || null, field: field || null, indexes: indexes, api: api })
+          : applyWildcardIndexes(rule.target, indexes);
+        var ctx = {
+          api: api,
+          event: event || null,
+          field: field || null,
+          indexes: indexes,
+          sources: sources,
+          target: target,
+          getField: getField,
+          getPathValue: getPathValue,
+          getPathValues: getPathValues,
+          getJson: buildJson
+        };
+        var value = rule.compute.call(api, ctx);
+        if (value === undefined) return null;
+        busy = true;
+        try {
+          return setPathValue(target, value, {
+            autoOpen: rule.autoOpen !== false,
+            autoChoice: rule.autoChoice !== false,
+            autoRepeat: rule.autoRepeat !== false,
+            clearInactiveChoice: rule.clearInactiveChoice !== false,
+            emit: rule.emit === true
+          });
+        } finally {
+          busy = false;
+        }
+      };
+      var off = onEvent('change', function(event) {
+        if (busy) return;
+        var field = getField(event.field);
+        if (!field || !fieldMatchesAny(sources, field)) return;
+        computeNow(event, field);
+      });
+      if (rule.immediate) computeNow(null, null);
+      return off;
     }
 
     function registerLinkage(rule) {
@@ -1356,8 +1470,11 @@ _API_SCRIPT = r"""
       setValues: setValues,
       setPathValue: setPathValue,
       setPathValues: setPathValues,
+      setPathValuesStrict: setPathValuesStrict,
       getPathValue: getPathValue,
       getPathValues: getPathValues,
+      getMeta: getMeta,
+      findMeta: findMeta,
       ensurePath: ensurePath,
       openPath: openPath,
       activateChoice: activateChoice,
@@ -1386,6 +1503,7 @@ _API_SCRIPT = r"""
       focusFirstError: focusFirstError,
       containsElement: containsElement,
       registerLinkage: registerLinkage,
+      registerComputed: registerComputed,
       registerValidator: registerValidator,
       on: onEvent,
       off: offEvent,
