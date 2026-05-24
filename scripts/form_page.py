@@ -510,6 +510,7 @@ def _html_head(message_id: str, name_zh: str, name_en: str, collection: str, roo
         '  <meta http-equiv="X-UA-Compatible" content="IE=edge">\n'
         '  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n'
         f'  <title>{message_id} - ISO 20022 Message Form</title>\n'
+        '  <link rel="icon" href="data:,">\n'
         f'  <link rel="stylesheet" href="{_asset_url(asset_base, "css/bootstrap.min.css")}">\n'
         f'  <link rel="stylesheet" href="{_asset_url(asset_base, "css/bootstrap-theme.min.css")}">\n'
         f'  <link rel="stylesheet" href="{_asset_url(asset_base, "css/app.css")}">\n'

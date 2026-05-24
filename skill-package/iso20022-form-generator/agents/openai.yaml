@@ -1,0 +1,4 @@
+interface:
+  display_name: "ISO 20022 表单生成器"
+  short_description: "检查、重新生成并验证 ISO 20022 表单生成器工作区。"
+  default_prompt: "在处理 ISO 20022 表单生成器仓库时使用 $iso20022-form-generator。优先检查 scripts/ 下的源码，按 schema 或 PDF 重新生成 output/form 产物，并验证 IE8 兼容性、循环组、字段联动和嵌入式 API 流程。"
